@@ -13,6 +13,9 @@ stepsCompleted:
   - 'Step 9: Functional Requirements Synthesis'
   - 'Step 10: Non-Functional Requirements'
   - 'Step 11: Document Polish'
+  - 'step-e-01-discovery'
+  - 'step-e-02-review'
+  - 'step-e-03-edit'
 inputDocuments:
   - '/Users/jerryinyang/Code/logiq/_bmad-output/brainstorming/brainstorming-session-2026-04-13-001.md'
   - '/Users/jerryinyang/Code/logiq/_bmad-output/brainstorming/brainstorming-session-transcript-2026-04-13.md'
@@ -27,6 +30,10 @@ classification:
   domain: 'EdTech/DevTools Crossover'
   complexity: 'Medium-High'
   projectContext: 'greenfield'
+lastEdited: '2026-04-14'
+editHistory:
+  - date: '2026-04-14'
+    changes: 'Systematic remediation of all validation findings: (1) Added measurement methods and context to all 25 NFRs; (2) Assigned all 42 FRs to phases (MVP/Phase 2/Phase 3); (3) Completed truncated FR17 with prediction interface specification; (4) Replaced subjective language in FR21 (≥30% or 1+ O-notation); (5) Replaced vague quantifiers in FR11, FR12, FR28; (6) Clarified FR23 vs FR28 distinction; (7) Specified FR25 collaboration model; (8) Defined FR29 badge criteria; (9) Resolved Journey 2 dependency on FR10 by rewriting MVP narrative; (10) Added COPPA/FERPA compliance to data privacy; (11) Added Bloom'"'"'s Taxonomy and ACM curriculum framework references; (12) Made Product Scope self-contained with explicit in/out of scope items; (13) Fixed TLS 1.3 version pinning in NFR8; (14) Removed implementation leakage from NFR16, NFR21; (15) Replaced unmeasurable language in NFR4, NFR7, NFR14-16, NFR24-25; (16) Removed redundant intensifier in Journey 2. Post-audit brainstorming fidelity fixes: (17) FR24 added micro-leaderboard spec (growth metrics not raw scores, 5-friend limit); (18) FR10 added 5+ failures threshold; (19) Added FR43 Explain Your Thinking Gate (MVP lightweight + Phase 2 full gate)'
 ---
 
 # Product Requirements Document - logiq
@@ -107,13 +114,70 @@ Problem-solving ability keeps human developers relevant. As AI accelerates code 
 
 ## Product Scope
 
-### MVP - Minimum Viable Product
+### MVP - Minimum Viable Product (Phase 1)
 
-Core interaction, gamification, and post-solve features detailed in Project Scoping section.
+**In Scope — Core Interaction:**
+- Logic Block Canvas with drag-and-connect interaction (full block vocabulary: loop, condition, comparison, return, variable, edge case handler)
+- Guided Linear Skill Path with sequential unlocking (1-3 challenges at a time)
+- Reasoning Path Scoring engine (4 dimensions: problem breakdown, edge case proactivity, structure efficiency, iteration improvement)
+- Progressive Variant System (2-3 variants per challenge)
+- Visual Metaphor Library (all 11 metaphors)
+- Failure Visualization Engine with step-through execution and red failure highlighting
+- Micro-Concept Cards for new concept introductions
+- Hint Gating System (unlock after 3 failed attempts, one layer at a time)
+- Checkpoint Gating for skill cluster progression
+- Edge Case Stress Test running logic against known edge cases
+- Prediction Gate for new concepts (multiple choice prediction of algorithm behavior)
+- Insight Streaks tracking consecutive learning moments
+- Aha! Moment Tracker detecting solution path improvement (reasoning score increase ≥30% or O-notation improvement by 1+ level)
+- Post-Solve Solution Sharing (gated behind completion — view 3 alternative approaches)
+- User account creation and management
+- Progress tracking across skill areas with reasoning growth metrics visualization
+- Challenge history access
+- Content designer tooling for challenge creation with test cases and edge cases
+- Progressive difficulty sequence definition for skill paths
+- Expert review pipeline for challenge content validation and scoring calibration
+- Explain Your Thinking Gate (lightweight: optional text field for articulating reasoning after challenge completion)
+
+**Out of Scope — MVP:**
+- Community challenge creation and publication
+- Friend activity feeds and micro-leaderboards
+- Real-time co-editing and shared visual canvas
+- Group challenge projects
+- Bottleneck Detection & Intervention (automated mini-challenges)
+- Faded worked examples and progressive scaffolding
+- Solution comparison mode
+- Error-finding (debugging) challenges
+- Multiple solution exploration
+- Failure pattern library display
+- Explain Your Thinking Gate
+- Multi-language code export
+- Advanced analytics dashboard
+- Community recognition badges
+- Immune system learning model, progressive overload training, neural network metaphors
 
 ### Growth Features (Post-MVP)
 
-Community, collaboration, and advanced learning patterns detailed in Project Scoping section.
+**Phase 2 (Growth):**
+- Friend Activity Feed & Micro-Leaderboards
+- Group Challenge Projects (optional team projects)
+- Bottleneck Detection & Intervention (automated mini-challenges)
+- Shared Visual Canvas (real-time co-editing for collaboration)
+- Challenge Design Mode (user-generated community content)
+- Faded Worked Examples (progressive scaffolding)
+- Solution Comparison Mode (trade-off evaluation)
+- Error-Finding Challenges (debugging practice)
+- Multiple Solution Exploration (revisit with different approaches)
+- Failure Pattern Library (common failure patterns display)
+- Explain Your Thinking Gate (reasoning articulation before progression)
+
+**Phase 3 (Expansion):**
+- Immune System Learning Model paradigm refinement
+- Progressive Overload Training calibration optimization
+- Neural Network Trial-and-Error metaphor integration
+- Multi-language code export from visual logic solutions
+- Advanced analytics dashboard for deep reasoning pattern analysis
+- Complete community-driven content ecosystem at scale
 
 ## User Journeys
 
@@ -141,14 +205,14 @@ Community, collaboration, and advanced learning patterns detailed in Project Sco
 
 **Rising Action:** Hints unlock after 2-3 attempts. First hint: "Think about what happens when the target is smaller than the middle element." They try again. Fail. Second hint: "What if the array has only one element?" They add edge case handling blocks. Still fail on duplicate values.
 
-**Climax:** After 5 failures, Bottleneck Detection triggers: "You're struggling with loop termination conditions." The platform offers a targeted mini-challenge focused *only* on that sub-skill. They complete the micro-challenge, understand the pattern, and return to the main challenge — solving it.
+**Climax:** After 5 failures, the hint system reveals the core pattern: "You're struggling with loop termination conditions. Let's focus on that." The platform presents a guided edge-case walkthrough — a mini-challenge focused *only* on that sub-skill within the hint flow. They complete the micro-exercise, understand the pattern, and return to the main challenge — solving it.
 
-**Resolution:** They unlock Post-Solve Solution Sharing and see 3 completely different approaches to the same problem. They realize "there are many right answers." Their Insight Streak grows. They've turned failure into genuine learning.
+**Resolution:** They unlock Post-Solve Solution Sharing and see 3 different approaches to the same problem. They realize "there are many right answers." Their Insight Streak grows. They've turned failure into genuine learning.
 
 **Journey Requirements:**
 - Failure Visualization Engine showing where/why logic broke
 - Hint Gating System unlocking after attempts, revealing one layer at a time
-- Bottleneck Detection & Intervention for 5+ failures on same challenge
+- Hint-based Intervention for 5+ failures (guided edge-case walkthrough within hint flow)
 - Edge Case Stress Test running logic against known edge cases
 - Post-Solve Solution Sharing gated behind completion
 - Insight Streaks tracking consecutive learning moments
@@ -192,7 +256,7 @@ Community, collaboration, and advanced learning patterns detailed in Project Sco
 | Journey | Revealed Capabilities |
 |---------|----------------------|
 | Reasoning Breakthrough | Core canvas, variant system, aha tracking, reasoning scoring, skill map |
-| Productive Failure | Failure visualization, hint gating, bottleneck detection, edge case testing, solution sharing |
+| Productive Failure | Failure visualization, hint gating, hint-based intervention, edge case testing, solution sharing |
 | Learner to Creator | Challenge design mode, community publishing, solution viewing, recognition system |
 | Quality & Scoring | Admin dashboard, content review, scoring calibration, pattern monitoring |
 
@@ -207,13 +271,17 @@ Community, collaboration, and advanced learning patterns detailed in Project Sco
 
 **Content Quality Assurance:**
 - Challenge accuracy validated before publication
-- Progressive difficulty sequences follow pedagogical soundness principles
+- Progressive difficulty sequences follow pedagogical soundness principles aligned with Bloom's Taxonomy cognitive domain (remember → understand → apply → analyze → evaluate → create)
 - Visual metaphors tested with users before publication
+- Learning outcome assessment validity measured against established CS education research frameworks (ACM Computing Curriculum guidelines for undergraduate CS education)
 
 **Data Privacy:**
 - User learning data, progress tracking, and behavioral analytics handled responsibly
 - Transparent data practices — users understand what's tracked and why
 - No selling or sharing of user learning behavioral data
+- COPPA compliance: users under 13 require verifiable parental consent; parental access to review and delete child's data
+- FERPA compliance: educational records (progress, scores, learning outcomes) treated as protected education information with access controls
+- Data retention policy: users can request deletion of all learning data; inactive accounts purged after 24 months
 
 ### DevTools Domain Concerns
 
@@ -386,112 +454,113 @@ Tasks designed for collaborative parallel work with clear interface contracts.
 
 ### Challenge Interaction
 
-- FR1: Users can drag and connect visual logic blocks to construct algorithm solutions on a canvas
-- FR2: Users can test their visual logic solution against challenge test cases
-- FR3: Users can add edge case handling blocks to their logic flow
-- FR4: Users can revise and iterate on their logic solution after failure
-- FR5: Users can view the execution steps of their constructed logic flow
+- FR1: Users can drag and connect visual logic blocks to construct algorithm solutions on a canvas **[MVP]**
+- FR2: Users can test their visual logic solution against challenge test cases **[MVP]**
+- FR3: Users can add edge case handling blocks to their logic flow **[MVP]**
+- FR4: Users can revise and iterate on their logic solution after failure **[MVP]**
+- FR5: Users can view the execution steps of their constructed logic flow **[MVP]**
 
 ### Learning Progression
 
-- FR6: Users can view the full skill map territory showing all concepts ahead
-- FR7: Users can access sequentially unlocked challenges (1-3 at a time)
-- FR8: Users can receive challenge variants after completing a challenge
-- FR9: Users can complete checkpoint challenges to unlock next skill clusters
-- FR10: Users can receive targeted mini-challenges when stuck on specific sub-skills
-- FR11: Users can access hints after multiple failed attempts on a challenge
+- FR6: Users can view the full skill map territory showing all concepts ahead **[MVP]**
+- FR7: Users can access sequentially unlocked challenges (1-3 at a time) **[MVP]**
+- FR8: Users can receive 2-3 challenge variants after completing a challenge **[MVP]**
+- FR9: Users can complete checkpoint challenges to unlock next skill clusters **[MVP]**
+- FR10: Users can receive targeted mini-challenges when stuck on specific sub-skills after 5+ failures on the same challenge (Bottleneck Detection & Intervention) **[Phase 2]**
+- FR11: Users can access hints after 3 failed attempts on a challenge **[MVP]**
+- FR43: Users can articulate a brief explanation of why their solution works before advancing to the next challenge (lightweight MVP: optional text field for reasoning; Phase 2: required gate with minimum articulation quality check) **[MVP]**
 
 ### Reasoning Evaluation
 
-- FR12: Users can see their reasoning path score across multiple dimensions (problem breakdown, edge case proactivity, structure efficiency, iteration improvement)
-- FR13: Users can view the reasoning scoring rubric explaining how scores are calculated
-- FR14: Users can receive dimension-specific feedback on their reasoning quality
+- FR12: Users can see their reasoning path score across 4 dimensions: problem breakdown quality, edge case proactivity, structure efficiency, and iteration improvement **[MVP]**
+- FR13: Users can view the reasoning scoring rubric explaining how scores are calculated **[MVP]**
+- FR14: Users can receive dimension-specific feedback on their reasoning quality **[MVP]**
 
 ### Visual Learning
 
-- FR15: Users can interact with 11 visual metaphors representing core DSA concepts (arrays, linked lists, stacks, queues, trees, graphs, hash maps, binary search, recursion, DP, two pointers)
-- FR16: Users can watch algorithm execution visualized step-by-step
-- FR17: Users can see failure points highlighted in their logic flow when tests fail
-- FR18: Users can predict algorithm behavior before seeing execution results (prediction gates)
-- FR19: Users can access micro-concept cards introducing new concepts with visual diagrams
+- FR15: Users can interact with 11 visual metaphors representing core DSA concepts (arrays, linked lists, stacks, queues, trees, graphs, hash maps, binary search, recursion, DP, two pointers) **[MVP]**
+- FR16: Users can watch algorithm execution visualized step-by-step **[MVP]**
+- FR17: Users can predict algorithm behavior before seeing execution results using a multiple-choice prediction interface with 4 options and a confidence rating (low/medium/high); wrong predictions are captured and displayed alongside actual results to highlight intuition-reality gaps **[MVP]**
+- FR18: Users can predict algorithm behavior before seeing execution results (prediction gates) **[MVP]**
+- FR19: Users can access micro-concept cards introducing new concepts with visual diagrams **[MVP]**
 
 ### Gamification & Motivation
 
-- FR20: Users can track consecutive insight moments as streaks
-- FR21: Users can see their "aha!" moments when solution paths dramatically improve
-- FR22: Users can view their personal breakthrough timeline showing cognitive growth over time
+- FR20: Users can track consecutive insight moments as streaks **[MVP]**
+- FR21: Users can see their "aha!" moments when solution paths improve by ≥30% reasoning score or 1+ O-notation efficiency level **[MVP]**
+- FR22: Users can view their personal breakthrough timeline showing cognitive growth over time **[Phase 2]**
 
 ### Community & Collaboration
 
-- FR23: Users can view alternative solution approaches after completing a challenge
-- FR24: Users can view friends' progress and activity in a personal feed
-- FR25: Users can participate in optional group challenge projects
-- FR26: Users can design and publish challenges for the community after mastering concepts
-- FR27: Users can attempt community-created challenges
-- FR28: Users can view multiple solution approaches to the same problem
-- FR29: Users can earn and view community recognition badges
+- FR23: Users can view alternative solution approaches to their own completed challenge (post-solve gating — 3 approaches shown) **[MVP]**
+- FR24: Users can view friends' progress and activity in a personal feed with micro-leaderboards ranked by growth metrics (reasoning score improvement, insight streaks) — not raw scores — limited to groups of up to 5 friends for human-scale social motivation **[Phase 2]**
+- FR25: Users can participate in optional group challenge projects where groups of 3-5 users are self-formed, collaboration occurs via shared visual canvas with real-time co-editing, and submission is a single group solution with individual contribution tracking **[Phase 2]**
+- FR26: Users can design and publish challenges for the community after mastering 5+ concepts in a skill area **[Phase 2]**
+- FR27: Users can attempt community-created challenges **[Phase 2]**
+- FR28: Users can view community-submitted solution approaches to any challenge they have completed, sorted by community rating, showing distinct logic block arrangements from other users **[Phase 2]**
+- FR29: Users can earn and view community recognition badges awarded for: Challenge Creator (5 published challenges), Master Solver (10 challenges mastered in one skill area), Insight Streak (7 consecutive insight moments), Community Helper (10 helpful comments on community solutions) **[Phase 2]**
 
 ### User Account & Progress
 
-- FR30: Users can create and manage their learning account
-- FR31: Users can view their progress across all skill areas over time
-- FR32: Users can see their reasoning growth metrics visualized
-- FR33: Users can access their challenge history and completion status
+- FR30: Users can create and manage their learning account (email/password or OAuth provider) **[MVP]**
+- FR31: Users can view their progress across all skill areas over time via a visual progress dashboard **[MVP]**
+- FR32: Users can see their reasoning growth metrics visualized as trend charts for each of the 4 scoring dimensions **[MVP]**
+- FR33: Users can access their challenge history and completion status with filtering by skill area and date range **[MVP]**
 
 ### Content Management
 
-- FR34: Content designers can create challenges with test cases and edge cases
-- FR35: Content designers can define progressive difficulty sequences for skill paths
-- FR36: Expert reviewers can validate challenge content for technical accuracy
-- FR37: Expert reviewers can calibrate reasoning scoring algorithms against expert judgment
+- FR34: Content designers can create challenges with test cases and edge cases using an internal challenge authoring tool **[MVP]**
+- FR35: Content designers can define progressive difficulty sequences for skill paths using the curriculum mapping interface **[MVP]**
+- FR36: Expert reviewers can validate challenge content for technical accuracy via a review workflow before publication **[MVP]**
+- FR37: Expert reviewers can calibrate reasoning scoring algorithms against expert judgment using a comparison dataset of platform scores vs. expert ratings **[MVP]**
 
 ### Administration & Analytics
 
-- FR38: Administrators can review scoring correlation data against expert judgment
-- FR39: Administrators can review and approve community-created challenges
-- FR40: Administrators can monitor failure pattern library accuracy
-- FR41: Administrators can recalibrate scoring algorithm parameters
-- FR42: Administrators can analyze user learning outcome data
+- FR38: Administrators can review scoring correlation data against expert judgment via a dashboard showing correlation coefficients by challenge type **[Phase 2]**
+- FR39: Administrators can review and approve community-created challenges before publication via a moderation queue **[Phase 2]**
+- FR40: Administrators can monitor failure pattern library accuracy by reviewing pattern match rates against actual user failure data **[Phase 2]**
+- FR41: Administrators can recalibrate scoring algorithm parameters and test changes against a holdout expert judgment dataset **[Phase 2]**
+- FR42: Administrators can analyze user learning outcome data including completion rates, retention metrics, and reasoning score distributions **[Phase 2]**
 
 ## Non-Functional Requirements
 
 ### Performance
 
-- NFR1: Logic block canvas interactions (drag, snap, connect) respond within 100ms
-- NFR2: Algorithm visualization animations render at 60fps
-- NFR3: Initial application page loads within 3 seconds on broadband connection
-- NFR4: Skill map and dashboard interactions feel instant (<500ms response)
-- NFR5: Real-time co-editing sessions maintain <200ms synchronization latency
-- NFR6: Reasoning score calculation completes within 2 seconds after solution submission
-- NFR7: System supports concurrent usage of 10,000 active users without performance degradation
+- NFR1: Logic block canvas interactions (drag, snap, connect) respond within 100ms for 95th percentile as measured by frontend performance monitoring with RUM (Real User Monitoring) instrumentation — critical for fluid user experience on the core canvas
+- NFR2: Algorithm visualization animations render at 60fps minimum as measured by browser DevTools performance profiler — ensures smooth visual execution that makes failure points visible and diagnostic
+- NFR3: Initial application page loads within 3 seconds on broadband connection (50Mbps+) for 95th percentile as measured by synthetic load testing and APM monitoring — prevents user abandonment at entry point
+- NFR4: Skill map and dashboard interactions respond within 500ms for 95th percentile as measured by APM monitoring — maintains perceived responsiveness across navigation
+- NFR5: Real-time co-editing sessions maintain <200ms synchronization latency for 95th percentile as measured by WebSocket message timing — prevents visible desynchronization between collaborators
+- NFR6: Reasoning score calculation completes within 2 seconds after solution submission for 95th percentile as measured by backend APM tracing — keeps feedback loop tight after challenge completion
+- NFR7: System supports 10,000 concurrent active users with <10% performance degradation on all response time metrics as measured by load testing at 10,000 concurrent connections — ensures platform scales to launch target audience
 
 ### Security
 
-- NFR8: All user data encrypted at rest and in transit (TLS 1.3)
-- NFR9: User authentication sessions expire after 30 days of inactivity
-- NFR10: User learning behavioral data is never sold or shared with third parties
-- NFR11: API endpoints protected against common web vulnerabilities (XSS, CSRF, SQL injection)
-- NFR12: Community-created challenges scanned for malicious content before publication
+- NFR8: All user data encrypted at rest and in transit using industry-standard encryption protocols as measured by automated security scanning and penetration testing — protects user learning data from unauthorized access
+- NFR9: User authentication sessions expire after 30 days of inactivity as measured by session token validation checks — balances convenience with account security
+- NFR10: User learning behavioral data is never sold or shared with third parties as verified by annual third-party privacy audit and data flow analysis — maintains user trust and platform integrity
+- NFR11: Application is protected against common web vulnerabilities (XSS, CSRF, SQL injection) as verified by quarterly automated vulnerability scanning and annual penetration testing with zero critical findings — prevents unauthorized data access and manipulation
+- NFR12: Community-created challenges are scanned for malicious content before publication with 100% automated scan coverage as measured by content moderation pipeline monitoring — prevents malicious logic from reaching users
 
 ### Scalability
 
-- NFR13: System supports 10x user growth from initial launch with <10% performance degradation
-- NFR14: Challenge content delivery scales to support concurrent access during peak usage periods
-- NFR15: Community challenge storage scales to support infinite user-generated content growth
-- NFR16: Database architecture supports horizontal scaling for read-heavy workloads (progress tracking, solution viewing)
+- NFR13: System supports 10x user growth from initial launch (up to 100,000 concurrent users) with <10% degradation on response time metrics as measured by load testing at 10x baseline load — ensures platform handles growth without rearchitecture
+- NFR14: Challenge content delivery supports 50,000 concurrent users accessing challenges simultaneously with <2s content load time for 95th percentile as measured by CDN performance monitoring — supports peak usage during events or campaigns
+- NFR15: Community challenge storage scales to support 1 million user-generated challenges with <500ms query response time for 95th percentile as measured by database query performance monitoring — enables unrestricted community content growth
+- NFR16: Data storage architecture supports read-heavy workloads (progress tracking, solution viewing) at a 10:1 read-to-write ratio with <200ms read response time for 95th percentile as measured by database APM monitoring — optimizes for the dominant access pattern
 
 ### Accessibility
 
-- NFR17: Web application meets WCAG 2.1 AA compliance standards
-- NFR18: Visual canvas supports keyboard navigation for all logic block interactions
-- NFR19: Screen reader alternatives provided for all visual metaphors and algorithm visualizations
-- NFR20: Color choices in visualizations accommodate color-blind users (no red-green dependency)
-- NFR21: Focus management implemented for all interactive canvas elements with ARIA labels
+- NFR17: Web application meets WCAG 2.1 AA compliance standards as verified by automated accessibility testing (axe-core) on every release and manual screen reader testing quarterly — ensures legal compliance and inclusive access
+- NFR18: Visual canvas supports keyboard navigation for all logic block interactions (drag, drop, connect, delete, test) as verified by keyboard-only usability testing with zero blocked interactions — enables access for users unable to use pointing devices
+- NFR19: Screen reader alternatives are provided for all 11 visual metaphors and algorithm visualizations with equivalent information content as verified by screen reader testing (NVDA, VoiceOver) — ensures non-visual users receive the same learning content
+- NFR20: Color choices in visualizations accommodate color-blind users — no information conveyed solely through red-green color differentiation as verified by color blindness simulation testing — ensures 8% of male users can interpret all visual feedback
+- NFR21: Focus management is implemented for all interactive canvas elements with visible focus indicators and logical tab order as verified by keyboard navigation audit — enables efficient keyboard workflow
 
 ### Reliability
 
-- NFR22: Application uptime target of 99.5% during business hours (learning sessions)
-- NFR23: User progress and reasoning scores persisted with zero data loss on session completion
-- NFR24: Graceful degradation when real-time collaboration connection drops — local work saved
-- NFR25: Failed challenge submissions automatically retry without user intervention
+- NFR22: Application uptime target of 99.5% during business hours (06:00-24:00 UTC) as measured by cloud provider health dashboard and synthetic monitoring checks every 5 minutes — ensures platform availability for learning sessions
+- NFR23: User progress and reasoning scores persisted with zero data loss on session completion as measured by database transaction integrity checks and daily backup verification — prevents loss of user learning investment
+- NFR24: When real-time collaboration connection drops, local work is auto-saved every 30 seconds and synced within 10 seconds of reconnection as measured by network failure simulation testing — prevents data loss during connectivity issues
+- NFR25: Failed challenge submissions are retried up to 3 times with exponential backoff (1s, 2s, 4s intervals) achieving >95% eventual success rate as measured by submission retry pipeline monitoring — ensures transient failures don't block user progress
 
