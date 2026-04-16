@@ -1,0 +1,161 @@
+# generated: 2026-04-14
+# last_updated: 2026-04-14
+# project: logiq
+# project_key: NOKEY
+# tracking_system: file-system
+# story_location: _bmad-output/implementation-artifacts
+
+# STATUS DEFINITIONS:
+# ==================
+# Epic Status:
+#   - backlog: Epic not yet started
+#   - in-progress: Epic actively being worked on
+#   - done: All stories in epic completed
+#
+# Epic Status Transitions:
+#   - backlog → in-progress: Automatically when first story is created (via create-story)
+#   - in-progress → done: Manually when all stories reach 'done' status
+#
+# Story Status:
+#   - backlog: Story only exists in epic file
+#   - ready-for-dev: Story file created in stories folder
+#   - in-progress: Developer actively working on implementation
+#   - review: Ready for code review (via Dev's code-review workflow)
+#   - done: Story completed
+#
+# Retrospective Status:
+#   - optional: Can be completed but not required
+#   - done: Retrospective has been completed
+#
+# WORKFLOW NOTES:
+# ===============
+# - Epic transitions to 'in-progress' automatically when first story is created
+# - Stories can be worked in parallel if team capacity allows
+# - Developer typically creates next story after previous one is 'done' to incorporate learnings
+# - Dev moves story to 'review', then runs code-review (fresh context, different LLM recommended)
+
+generated: 2026-04-14
+last_updated: 2026-04-14
+project: logiq
+project_key: NOKEY
+tracking_system: file-system
+story_location: _bmad-output/implementation-artifacts
+
+development_status:
+  # ==============================
+  # Epic 1: Project Foundation & Authentication (MVP)
+  # ==============================
+  epic-1: backlog
+  1-1-initialize-project-repository-starter-template: backlog
+  1-2-set-up-postgresql-database-schema-drizzle-orm: backlog
+  1-3-implement-user-registration-email-password: backlog
+  1-4-implement-user-login-with-better-auth: backlog
+  1-5-implement-oauth-login-github-google: backlog
+  1-6-implement-password-reset-flow: backlog
+  1-7-implement-user-account-management-rbac: backlog
+  epic-1-retrospective: optional
+
+  # ==============================
+  # Epic 2: Logic Block Canvas & Challenge Core (MVP)
+  # ==============================
+  epic-2: backlog
+  2-1-install-and-configure-react-flow-canvas: backlog
+  2-2-implement-block-palette-drag-to-canvas-interaction: backlog
+  2-3-implement-block-connection-real-time-validation: backlog
+  2-4-build-logic-block-execution-engine-test-runner: backlog
+  2-5-implement-step-through-execution-visualization: backlog
+  2-6-implement-iteration-canvas-state-persistence: backlog
+  2-7-implement-edge-case-handling-blocks: backlog
+  epic-2-retrospective: optional
+
+  # ==============================
+  # Epic 3: Learning Progression System (MVP)
+  # ==============================
+  epic-3: backlog
+  3-1-create-challenge-data-model-content-schema: backlog
+  3-2-build-skill-map-visualization-sequential-unlocking: backlog
+  3-3-implement-challenge-unlocking-logic-progression-engine: backlog
+  3-4-implement-progressive-variant-system: backlog
+  3-5-implement-gated-hint-system: backlog
+  3-6-implement-challenge-page-layout-challenge-description-component: backlog
+  epic-3-retrospective: optional
+
+  # ==============================
+  # Epic 4: Reasoning Scoring & Feedback (MVP)
+  # ==============================
+  epic-4: backlog
+  4-1-define-scoring-engine-algorithm-dimensions: backlog
+  4-2-implement-scoring-rubrics-dimension-specific-feedback: backlog
+  4-3-persist-scores-record-scoring-events: backlog
+  4-4-implement-expert-correlation-validation-pipeline: backlog
+  epic-4-retrospective: optional
+
+  # ==============================
+  # Epic 5: Visual Learning & Metaphors (MVP)
+  # ==============================
+  epic-5: backlog
+  5-1-build-visual-metaphor-display-framework-first-3-metaphors: backlog
+  5-2-implement-remaining-8-visual-metaphors: backlog
+  5-3-implement-step-through-algorithm-execution-visualization: backlog
+  5-4-implement-prediction-gate-for-new-concepts: backlog
+  5-5-implement-micro-concept-card-delivery-system: backlog
+  epic-5-retrospective: optional
+
+  # ==============================
+  # Epic 6: Gamification & Growth Tracking (MVP)
+  # ==============================
+  epic-6: backlog
+  6-1-implement-insight-streak-detection-tracker: backlog
+  6-2-implement-aha-moment-detection-tracker: backlog
+  6-3-implement-explain-your-thinking-gate-lightweight-mvp: backlog
+  epic-6-retrospective: optional
+
+  # ==============================
+  # Epic 7: Progress Dashboard & History (MVP)
+  # ==============================
+  epic-7: backlog
+  7-1-build-progress-dashboard-shell-progress-overview: backlog
+  7-2-implement-reasoning-growth-trend-charts: backlog
+  7-3-implement-challenge-history-with-filtering: backlog
+  epic-7-retrospective: optional
+
+  # ==============================
+  # Epic 8: Post-Solve Solution Sharing (MVP)
+  # ==============================
+  epic-8: backlog
+  8-1-implement-post-solve-solution-sharing-completion-gated: backlog
+  epic-8-retrospective: optional
+
+  # ==============================
+  # Epic 9: Content Management & Quality Pipeline (MVP)
+  # ==============================
+  epic-9: backlog
+  9-1-build-challenge-authoring-tool: backlog
+  9-2-build-challenge-variant-difficulty-sequence-builder: backlog
+  9-3-implement-expert-review-workflow: backlog
+  9-4-implement-scoring-calibration-comparison-tool: backlog
+  epic-9-retrospective: optional
+
+  # ==============================
+  # Epic 10: Community & Collaboration (Phase 2)
+  # ==============================
+  epic-10: backlog
+  10-1-implement-bottleneck-detection-mini-challenge-intervention: backlog
+  10-2-implement-personal-breakthrough-timeline: backlog
+  10-3-implement-friend-activity-feed-micro-leaderboards: backlog
+  10-4-implement-group-challenge-projects-shared-canvas: backlog
+  10-5-implement-challenge-design-mode-community-publication: backlog
+  10-6-implement-community-solution-browsing-rating: backlog
+  10-7-implement-community-recognition-badge-system: backlog
+  epic-10-retrospective: optional
+
+  # ==============================
+  # Epic 11: Admin Dashboard & Analytics (Phase 2)
+  # ==============================
+  epic-11: backlog
+  11-1-build-admin-dashboard-shell-scoring-correlation-view: backlog
+  11-2-implement-community-challenge-moderation-queue: backlog
+  11-3-implement-failure-pattern-library-accuracy-monitor: backlog
+  11-4-implement-scoring-algorithm-recalibration-tools: backlog
+  11-5-implement-learning-outcome-analytics-dashboard: backlog
+  epic-11-retrospective: optional
