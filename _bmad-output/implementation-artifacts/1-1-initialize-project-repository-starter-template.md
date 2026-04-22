@@ -57,6 +57,13 @@ So that the team has a consistent, production-ready foundation to build on.
   - [ ] Map Tailwind CSS config to use these CSS custom properties
   - [ ] Configure dark mode support (dark-mode-first per UX-DR1)
 
+## Runnable Code Location
+
+All runnable code (Next.js app, components, etc.) MUST be created in the `web/` subfolder at the project root, NOT in the root directory. This avoids conflicts with architectural docs and BMad tooling.
+
+- Project root: `/home/l2e/smirk/logiq/web/`
+- Example: `web/src/app/`, `web/src/components/`, etc.
+
 ## Dev Notes
 
 ### Architecture Patterns & Constraints
@@ -76,7 +83,7 @@ So that the team has a consistent, production-ready foundation to build on.
 
 - Expected structure after initialization:
 ```
-src/
+web/src/
 ├── app/                    # Next.js App Router pages & layouts
 │   ├── layout.tsx          # Root layout with providers
 │   └── page.tsx            # Home page

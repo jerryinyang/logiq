@@ -596,7 +596,7 @@ interface State {
 ### Complete Project Directory Structure
 
 ```
-logiq-web/
+web/
 ├── package.json                    # Dependencies and scripts
 ├── next.config.js                  # Next.js configuration
 ├── tailwind.config.js              # Tailwind CSS configuration + design tokens
