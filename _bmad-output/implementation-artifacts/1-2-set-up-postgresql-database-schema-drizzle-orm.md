@@ -64,6 +64,13 @@ So that all user and authentication data is stored reliably and type-safely.
   - [ ] Run `npm run db:migrate` and verify tables are created in PostgreSQL
   - [ ] Verify schema with `drizzle-kit studio` or database query
 
+## Runnable Code Location
+
+All runnable code (database schema, Drizzle config, etc.) MUST be created in the `web/` subfolder at the project root, NOT in the root directory. This avoids conflicts with architectural docs and BMad tooling.
+
+- Project root for code: `/home/l2e/smirk/logiq/web/`
+- Example: `web/src/lib/db/`, `web/drizzle.config.ts`, etc.
+
 ## Dev Notes
 
 ### Architecture Patterns & Constraints
@@ -81,7 +88,7 @@ So that all user and authentication data is stored reliably and type-safely.
 
 - Expected structure:
 ```
-src/lib/db/
+web/src/lib/db/
 ├── index.ts              # Database connection pool export
 ├── schema.ts             # Barrel re-export of all schema modules
 ├── schema/
