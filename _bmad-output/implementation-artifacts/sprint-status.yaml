@@ -45,14 +45,14 @@ development_status:
   # ==============================
   # Epic 1: Project Foundation & Authentication (MVP)
   # ==============================
-  epic-1: backlog
-  1-1-initialize-project-repository-starter-template: backlog
-  1-2-set-up-postgresql-database-schema-drizzle-orm: backlog
-  1-3-implement-user-registration-email-password: backlog
-  1-4-implement-user-login-with-better-auth: backlog
-  1-5-implement-oauth-login-github-google: backlog
-  1-6-implement-password-reset-flow: backlog
-  1-7-implement-user-account-management-rbac: backlog
+  epic-1: ready-for-dev
+  1-1-initialize-project-repository-starter-template: ready-for-dev
+  1-2-set-up-postgresql-database-schema-drizzle-orm: ready-for-dev
+  1-3-implement-user-registration-email-password: ready-for-dev
+  1-4-implement-user-login-with-better-auth: ready-for-dev
+  1-5-implement-oauth-login-github-google: ready-for-dev
+  1-6-implement-password-reset-flow: ready-for-dev
+  1-7-implement-user-account-management-rbac: ready-for-dev
   epic-1-retrospective: optional
 
   # ==============================
