@@ -22,26 +22,6 @@ export async function POST(request: NextRequest) {
     const { firstName, lastName, email, password, profilePicture } = result.data
     const supabase = await createClient()
 
-    // Check if user already exists by trying to get auth user
-    const { data: existingUsers } = await supabase.auth.admin.listUsers()
-    const existingUser = existingUsers?.users?.find(
-      u => u.email?.toLowerCase() === email.toLowerCase()
-    )
-
-    if (existingUser) {
-      // Check if user is already confirmed
-      if (existingUser.email_confirmed_at) {
-        return NextResponse.json(
-          { 
-            success: false, 
-            errors: [{ field: 'email', message: 'An account with this email already exists. Please sign in instead.' }] 
-          },
-          { status: 400 }
-        )
-      }
-      // User exists but not confirmed - we'll resend OTP below
-    }
-
     // Sign up with Supabase Auth - skip email confirmation for now
     const { data, error } = await supabase.auth.signUp({
       email: email.toLowerCase(),
