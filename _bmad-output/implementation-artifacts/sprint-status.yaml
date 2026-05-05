@@ -35,7 +35,7 @@
 # - Dev moves story to 'review', then runs code-review (fresh context, different LLM recommended)
 
 generated: 2026-04-14
-last_updated: 2026-04-14
+last_updated: 2026-05-05
 project: logiq
 project_key: NOKEY
 tracking_system: file-system

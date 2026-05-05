@@ -6,7 +6,12 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint ."
+    "lint": "eslint .",
+    "test": "vitest run",
+    "db:generate": "drizzle-kit generate",
+    "db:migrate": "dotenv-cli -e .env.local -- drizzle-kit migrate",
+    "db:push": "dotenv-cli -e .env.local -- drizzle-kit push",
+    "db:studio": "dotenv-cli -e .env.local -- drizzle-kit studio"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.9.1",
@@ -46,12 +51,14 @@
     "clsx": "^2.1.1",
     "cmdk": "1.1.1",
     "date-fns": "4.1.0",
+    "drizzle-orm": "^0.45.2",
     "embla-carousel-react": "8.6.0",
     "framer-motion": "^12.38.0",
     "input-otp": "1.4.2",
     "lucide-react": "^0.564.0",
     "next": "16.2.4",
     "next-themes": "^0.4.6",
+    "postgres": "^3.4.9",
     "react": "^19",
     "react-day-picker": "9.13.2",
     "react-dom": "^19",
@@ -66,14 +73,19 @@
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4.2.0",
+    "@testing-library/jest-dom": "^6.9.1",
+    "@testing-library/react": "^16.3.2",
     "@types/bcryptjs": "^3.0.0",
     "@types/node": "^22",
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "dotenv": "^17.4.2",
+    "dotenv-cli": "^11.0.0",
+    "drizzle-kit": "^0.31.10",
     "postcss": "^8.5",
     "tailwindcss": "^4.2.0",
     "tw-animate-css": "1.3.3",
-    "typescript": "5.7.3"
+    "typescript": "5.7.3",
+    "vitest": "^4.1.5"
   }
 }

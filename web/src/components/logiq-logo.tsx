@@ -17,28 +17,9 @@ export function LogiqLogo({ size = 'md', animate = true, className = '' }: Logiq
 
   const { icon, text } = sizes[size]
 
-  const logoVariants = {
-    hidden: { opacity: 0, scale: 0.8 },
-    visible: { 
-      opacity: 1, 
-      scale: 1,
-      transition: { duration: 0.5, ease: 'easeOut' }
-    }
-  }
-
-  const Wrapper = animate ? motion.div : 'div'
-  const wrapperProps = animate ? {
-    initial: 'hidden',
-    animate: 'visible',
-    variants: logoVariants,
-  } : {}
-
-  return (
-    <Wrapper 
-      className={`flex items-center gap-3 ${className}`}
-      {...wrapperProps}
-    >
-      <div 
+  const sharedContent = (
+    <>
+      <div
         className="relative flex items-center justify-center rounded-xl bg-foreground"
         style={{ width: icon, height: icon }}
       >
@@ -70,7 +51,7 @@ export function LogiqLogo({ size = 'md', animate = true, className = '' }: Logiq
             strokeLinejoin="round"
           />
         </svg>
-        <div 
+        <div
           className="absolute -bottom-0.5 -right-0.5 rounded-full bg-accent"
           style={{ width: icon * 0.3, height: icon * 0.3 }}
         />
@@ -78,6 +59,25 @@ export function LogiqLogo({ size = 'md', animate = true, className = '' }: Logiq
       <span className={`font-semibold tracking-tight text-foreground ${text}`}>
         LOGIQ
       </span>
-    </Wrapper>
+    </>
+  )
+
+  if (animate) {
+    return (
+      <motion.div
+        className={`flex items-center gap-3 ${className}`}
+        initial={{ opacity: 0, scale: 0.8 }}
+        animate={{ opacity: 1, scale: 1 }}
+        transition={{ duration: 0.5, ease: 'easeOut' }}
+      >
+        {sharedContent}
+      </motion.div>
+    )
+  }
+
+  return (
+    <div className={`flex items-center gap-3 ${className}`}>
+      {sharedContent}
+    </div>
   )
 }

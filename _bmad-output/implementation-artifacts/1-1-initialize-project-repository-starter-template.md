@@ -1,6 +1,6 @@
 # Story 1.1: Initialize Project Repository & Starter Template
 
-Status: ready-for-dev
+Status: review
 
 <!-- Note: Validation is optional. Run validate-create-story for quality check before dev-story. -->
 
@@ -26,25 +26,25 @@ So that the team has a consistent, production-ready foundation to build on.
 
 ## Tasks / Subtasks
 
-- [ ] Task 1: Initialize Next.js 15 Project (AC: #1, #3, #4)
-  - [ ] Run `npx create-next-app@latest` with required flags: `--typescript --tailwind --eslint --app --src-dir --import-alias "@/*"`
-  - [ ] Verify project structure: App Router in `src/app/`, TypeScript config, Tailwind config, ESLint config
-  - [ ] Ensure `npm run dev` starts successfully with HMR
-  - [ ] Ensure `npm run build` completes without errors
+- [x] Task 1: Initialize Next.js 15 Project (AC: #1, #3, #4)
+  - [x] Run `npx create-next-app@latest` with required flags: `--typescript --tailwind --eslint --app --src-dir --import-alias "@/*"`
+  - [x] Verify project structure: App Router in `src/app/`, TypeScript config, Tailwind config, ESLint config
+  - [x] Ensure `npm run dev` starts successfully with HMR
+  - [x] Ensure `npm run build` completes without errors
 
-- [ ] Task 2: Configure TypeScript Strict Mode (AC: #5)
-  - [ ] Verify `"strict": true` in `tsconfig.json`
-  - [ ] Verify `"baseUrl": "."` and `"paths": { "@/*": ["./src/*"] }` are configured
-  - [ ] Ensure no TypeScript errors across the project
+- [x] Task 2: Configure TypeScript Strict Mode (AC: #5)
+  - [x] Verify `"strict": true` in `tsconfig.json`
+  - [x] Verify `"baseUrl": "."` and `"paths": { "@/*": ["./src/*"] }` are configured
+  - [x] Ensure no TypeScript errors across the project
 
-- [ ] Task 3: Initialize shadcn/ui (AC: #2)
-  - [ ] Run `npx shadcn@latest init`
-  - [ ] Configure shadcn/ui with default style (New York or Default)
-  - [ ] Verify shadcn/ui components directory is set up at `src/components/ui/`
-  - [ ] Install initial base components: button, input, card, dialog, toast, dropdown-menu, select, label, separator, badge, tooltip, skeleton, alert, avatar
+- [x] Task 3: Initialize shadcn/ui (AC: #2)
+  - [x] Run `npx shadcn@latest init`
+  - [x] Configure shadcn/ui with default style (New York or Default)
+  - [x] Verify shadcn/ui components directory is set up at `src/components/ui/`
+  - [x] Install initial base components: button, input, card, dialog, toast, dropdown-menu, select, label, separator, badge, tooltip, skeleton, alert, avatar
 
-- [ ] Task 4: Configure Tailwind Design Tokens (AC: #6)
-  - [ ] Define CSS custom properties for UX-DR1 color palette in global CSS:
+- [x] Task 4: Configure Tailwind Design Tokens (AC: #6)
+  - [x] Define CSS custom properties for UX-DR1 color palette in global CSS:
     - Primary Indigo (#6366F1)
     - Success Emerald (#10B981)
     - Error Rose (#F43F5E)
@@ -53,9 +53,9 @@ So that the team has a consistent, production-ready foundation to build on.
     - Insight Violet (#8B5CF6)
     - Neutral Backgrounds Slate (#0F172A/#1E293B)
     - Neutral Text Slate (#F8FAFC/#94A3B8)
-  - [ ] Define UX-DR3 spacing scale as CSS variables (4, 8, 12, 16, 24, 32, 48, 64, 96px)
-  - [ ] Map Tailwind CSS config to use these CSS custom properties
-  - [ ] Configure dark mode support (dark-mode-first per UX-DR1)
+  - [x] Define UX-DR3 spacing scale as CSS variables (4, 8, 12, 16, 24, 32, 48, 64, 96px)
+  - [x] Map Tailwind CSS config to use these CSS custom properties
+  - [x] Configure dark mode support (dark-mode-first per UX-DR1)
 
 ## Runnable Code Location
 
@@ -113,10 +113,39 @@ web/src/
 
 ### Agent Model Used
 
-{{agent_model_name_version}}
+GLM-5.1
 
 ### Debug Log References
 
 ### Completion Notes List
 
+- Restructured existing project to use `src/` directory convention (moved `app/`, `components/`, `lib/`, `hooks/`, `middleware.ts` into `src/`)
+- Configured `tsconfig.json` with `"strict": true`, `"baseUrl": "."`, and `"paths": { "@/*": ["./src/*"] }`
+- Verified shadcn/ui already initialized with New York style; all 14 required base components present in `src/components/ui/`
+- Replaced default design tokens in `src/app/globals.css` with logiq-specific UX-DR1 color palette (Primary Indigo, Success Emerald, Error Rose, Warning Amber, Info Sky, Insight Violet, Slate neutral backgrounds/text) using oklch color space
+- Added UX-DR3 spacing scale as CSS custom properties (4, 8, 12, 16, 24, 32, 48, 64, 96px)
+- Configured Tailwind CSS `@theme` block to map design tokens to utility classes
+- Implemented dark-mode-first theming: `:root` uses dark theme colors (Slate backgrounds), `.dark` class overrides for light-variant adjustments
+- Added semantic color tokens: `--success`, `--warning`, `--info`, `--insight` mapped to UX-DR1 palette colors
+- Updated `src/app/layout.tsx` to use Inter (primary) and JetBrains Mono (secondary/code) fonts per UX spec
+- Fixed TypeScript error in `logiq-logo.tsx` (framer-motion `ease` string type)
+- Created `.env.local` and `.env.example` with placeholder Supabase environment variables
+- Removed `typescript.ignoreBuildErrors` from `next.config.mjs` for production quality
+- Build (`npm run build`) and dev server (`npm run dev`) both verified working
+- TypeScript type check (`npx tsc --noEmit`) passes with zero errors
+
 ### File List
+
+- web/src/app/globals.css (modified - added logiq design tokens, UX-DR1 colors, UX-DR3 spacing, dark-mode-first theming)
+- web/src/app/layout.tsx (modified - Inter/JetBrains Mono fonts, updated metadata)
+- web/src/components/logiq-logo.tsx (modified - fixed framer-motion type error)
+- web/tsconfig.json (modified - added baseUrl, updated paths to ./src/*)
+- web/components.json (modified - updated css path to src/app/globals.css)
+- web/next.config.mjs (modified - removed ignoreBuildErrors)
+- web/.env.local (created - placeholder Supabase env vars)
+- web/.env.example (created - environment variable template)
+- web/src/middleware.ts (moved from web/middleware.ts)
+- web/src/app/ (moved from web/app/)
+- web/src/components/ (moved from web/components/)
+- web/src/lib/ (moved from web/lib/)
+- web/src/hooks/ (moved from web/hooks/)
