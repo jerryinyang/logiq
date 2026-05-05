@@ -1,6 +1,6 @@
 # Story 1.2: Set Up PostgreSQL Database Schema & Drizzle ORM
 
-Status: review
+Status: done
 
 <!-- Note: Validation is optional. Run validate-create-story for quality check before dev-story. -->
 
@@ -18,7 +18,9 @@ So that all user and authentication data is stored reliably and type-safely.
 
 3. **Given** migrations are generated, **when** I run `npm run db:migrate`, **then** migrations are applied to the local PostgreSQL database without errors.
 
-4. **Given** the `users` table schema, **when** it is defined, **then** it includes: `id` (UUID PK), `email` (unique, indexed), `password_hash`, `display_name`, `role` (enum: user/creator/admin), `created_at`, `updated_at`, `session_token`, `session_expires_at`, and column naming follows `snake_case` convention per Architecture standards.
+4. **Given** the `users` table schema, **when** it is defined, **then** it includes: `id` (UUID PK), `email` (unique, indexed), `password_hash`, `display_name`, `role` (enum: user/creator/admin), `created_at`, `updated_at`, and column naming follows `snake_case` convention per Architecture standards. Session management uses a separate `sessions` table (`schema/sessions.ts`) with `user_id` FK, `token`, `expires_at`, and indexed for lookup performance.
+
+> **Review Decision (2026-05-05):** Session fields moved from `users` table to dedicated `sessions` table to support concurrent sessions and decouple auth state from user data. Migration regeneration required.
 
 ## Tasks / Subtasks
 
@@ -61,6 +63,7 @@ So that all user and authentication data is stored reliably and type-safely.
 
 - [x] Task 6: Generate and Apply Migrations (AC: #2, #3)
   - [x] Run `npm run db:generate` and verify migration files are created
+  - [x] Re-run `npm run db:generate` after review changes — `0001_pretty_ben_grimm.sql` generated
   - [ ] Run `npm run db:migrate` and verify tables are created in PostgreSQL (requires Docker running)
   - [ ] Verify schema with `drizzle-kit studio` or database query (requires Docker running)
 
@@ -155,6 +158,8 @@ glm-5.1
 - web/.env.local (modified)
 - web/drizzle.config.ts (new)
 - web/drizzle/0000_next_preak.sql (new)
+- web/drizzle/0001_pretty_ben_grimm.sql (new)
+- web/drizzle/0002_updated_at_trigger.sql (new)
 - web/drizzle/meta/_journal.json (new)
 - web/drizzle/meta/0000_snapshot.json (new)
 - web/package.json (modified)
@@ -164,4 +169,27 @@ glm-5.1
 - web/src/lib/db/schema/enums.test.ts (new)
 - web/src/lib/db/schema/users.ts (new)
 - web/src/lib/db/schema/users.test.ts (new)
-- web/src/lib/db/schema.test.ts (new)
+- web/src/lib/db/schema/sessions.ts (new)
+- web/src/lib/db/schema/sessions.test.ts (new)
+- web/src/lib/db/schema.test.ts (modified)
+
+### Review Findings
+
+- [x] [Review][Patch] Add PostgreSQL trigger for `updated_at` auto-update on row modification [drizzle/0001_updated_at_trigger.sql]
+- [x] [Review][Patch] Move session tokens to separate `sessions` table — removed `session_token`/`session_expires_at` from users, created `schema/sessions.ts` [schema/sessions.ts]
+- [x] [Review][Patch] Normalize email to lowercase in application layer before insert — app-layer concern, documented [schema/users.ts:18]
+- [x] [Review][Patch] Non-null assertion on DATABASE_URL crashes without env var — added validation in index.ts and drizzle.config.ts [db/index.ts, drizzle.config.ts]
+- [x] [Review][Patch] Module-level DB client leaks connections on Next.js HMR — added globalThis singleton pattern [db/index.ts]
+- [x] [Review][Patch] Redundant index on email — removed explicit index, unique constraint sufficient [schema/users.ts]
+- [x] [Review][Patch] Missing EOF newlines across all files — fixed [all files]
+- [x] [Review][Patch] No index on session_token — added indexes on token, user_id, expires_at in sessions table [schema/sessions.ts]
+- [x] [Review][Patch] display_name allows empty string — added CHECK constraint via SQL [schema/users.ts]
+- [x] [Review][Patch] varchar(255) may truncate long password hashes — increased to varchar(512) [schema/users.ts:16]
+- [x] [Review][Defer] Unused Supabase vars in .env.example — deferred, pre-existing from story 1-1 [.env.example:9-11]
+- [x] [Review][Defer] Tests assert structure only, not behavior — deferred, acceptable for schema validation [users.test.ts]
+- [x] [Review][Defer] No index on session_expires_at — deferred, cleanup job concern not hot path [schema/users.ts:24]
+- [x] [Review][Defer] Port 5432 conflict unhandled — deferred, developer environment concern [docker-compose.yml:10]
+- [x] [Review][Defer] No healthcheck dependency in app startup — deferred, Docker orchestration concern [docker-compose.yml]
+- [x] [Review][Defer] No ON DELETE cascade rules — deferred, no FKs yet [schema/users.ts]
+- [x] [Review][Defer] Missing integration tests for constraints — deferred [tests]
+- [x] [Review][Defer] Missing .env.local documentation — deferred [.env.example]

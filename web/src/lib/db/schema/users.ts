@@ -4,8 +4,8 @@ import {
   varchar,
   timestamp,
   pgEnum,
-  index,
 } from "drizzle-orm/pg-core";
+import { sql } from "drizzle-orm";
 import { userRole } from "./enums";
 
 export const userRoleEnum = pgEnum("user_role", userRole);
@@ -15,15 +15,17 @@ export const users = pgTable(
   {
     id: uuid("id").primaryKey().defaultRandom(),
     email: varchar("email", { length: 255 }).notNull().unique(),
-    password_hash: varchar("password_hash", { length: 255 }),
+    password_hash: varchar("password_hash", { length: 512 }),
     display_name: varchar("display_name", { length: 255 }).notNull(),
     role: userRoleEnum("role").default("user").notNull(),
-    created_at: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
-    updated_at: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
-    session_token: varchar("session_token", { length: 255 }),
-    session_expires_at: timestamp("session_expires_at", { withTimezone: true }),
+    created_at: timestamp("created_at", { withTimezone: true })
+      .defaultNow()
+      .notNull(),
+    updated_at: timestamp("updated_at", { withTimezone: true })
+      .defaultNow()
+      .notNull(),
   },
   (table) => [
-    index("idx_users_email").on(table.email),
+    sql`CONSTRAINT chk_display_name_not_empty CHECK (length(trim(${table.display_name})) > 0)`,
   ],
 );

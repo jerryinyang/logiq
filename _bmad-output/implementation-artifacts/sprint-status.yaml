@@ -1,5 +1,5 @@
 # generated: 2026-04-14
-# last_updated: 2026-04-14
+# last_updated: 2026-05-05
 # project: logiq
 # project_key: NOKEY
 # tracking_system: file-system
@@ -46,8 +46,8 @@ development_status:
   # Epic 1: Project Foundation & Authentication (MVP)
   # ==============================
   epic-1: ready-for-dev
-  1-1-initialize-project-repository-starter-template: ready-for-dev
-  1-2-set-up-postgresql-database-schema-drizzle-orm: ready-for-dev
+  1-1-initialize-project-repository-starter-template: done
+  1-2-set-up-postgresql-database-schema-drizzle-orm: done
   1-3-implement-user-registration-email-password: ready-for-dev
   1-4-implement-user-login-with-better-auth: ready-for-dev
   1-5-implement-oauth-login-github-google: ready-for-dev

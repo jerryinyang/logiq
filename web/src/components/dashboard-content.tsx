@@ -32,7 +32,6 @@ import {
   Home,
   Bell
 } from 'lucide-react'
-import type { User as SupabaseUser } from '@supabase/supabase-js'
 import { 
   clearSession, 
   initActivityTracking, 
@@ -40,8 +39,14 @@ import {
   type StoredUser 
 } from '@/lib/session'
 
+interface AppUser {
+  id: string
+  email?: string
+  user_metadata?: Record<string, unknown>
+}
+
 interface DashboardContentProps {
-  user: SupabaseUser
+  user: AppUser
 }
 
 export function DashboardContent({ user }: DashboardContentProps) {
@@ -60,11 +65,11 @@ export function DashboardContent({ user }: DashboardContentProps) {
     return cleanup
   }, [])
 
-  // Use stored user data if available, otherwise fall back to Supabase user
-  const firstName = storedUser?.firstName || user.user_metadata?.first_name || 'User'
-  const lastName = storedUser?.lastName || user.user_metadata?.last_name || ''
-  const fullName = storedUser?.fullName || user.user_metadata?.full_name || `${firstName} ${lastName}`.trim()
-  const email = storedUser?.email || user.email || ''
+  // Use stored user data if available, otherwise fall back to app user
+  const firstName = String(storedUser?.firstName || user.user_metadata?.first_name || 'User')
+  const lastName = String(storedUser?.lastName || user.user_metadata?.last_name || '')
+  const fullName = String(storedUser?.fullName || user.user_metadata?.full_name || `${firstName} ${lastName}`.trim())
+  const email = String(storedUser?.email || user.email || '')
   const initials = `${firstName.charAt(0)}${lastName.charAt(0) || firstName.charAt(1) || ''}`.toUpperCase() || 'U'
 
   const handleLogout = async () => {

@@ -27,6 +27,8 @@ export function LogiqLogo({ size = 'md', animate = true, className = '' }: Logiq
           viewBox="0 0 24 24"
           fill="none"
           className="text-background"
+          role="img"
+          aria-label="LOGIQ logo"
           style={{ width: icon * 0.6, height: icon * 0.6 }}
         >
           <path

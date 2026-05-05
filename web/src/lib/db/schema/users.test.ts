@@ -22,8 +22,8 @@ describe("users table", () => {
     expect(columnNames).toContain("role");
     expect(columnNames).toContain("created_at");
     expect(columnNames).toContain("updated_at");
-    expect(columnNames).toContain("session_token");
-    expect(columnNames).toContain("session_expires_at");
+    expect(columnNames).not.toContain("session_token");
+    expect(columnNames).not.toContain("session_expires_at");
   });
 
   it("should have id as UUID primary key with defaultRandom", () => {
@@ -38,7 +38,7 @@ describe("users table", () => {
     expect(users.email.notNull).toBe(true);
   });
 
-  it("should have password_hash as nullable varchar", () => {
+  it("should have password_hash as nullable varchar(512)", () => {
     expect(users.password_hash).toBeDefined();
     expect(users.password_hash.columnType).toBe("PgVarchar");
   });
@@ -61,8 +61,9 @@ describe("users table", () => {
     expect(users.updated_at.notNull).toBe(true);
   });
 
-  it("should have nullable session fields", () => {
-    expect(users.session_token.columnType).toBe("PgVarchar");
-    expect(users.session_expires_at.columnType).toBe("PgTimestamp");
+  it("should not have session fields (moved to sessions table)", () => {
+    const columnNames = Object.keys(users);
+    expect(columnNames).not.toContain("session_token");
+    expect(columnNames).not.toContain("session_expires_at");
   });
 });

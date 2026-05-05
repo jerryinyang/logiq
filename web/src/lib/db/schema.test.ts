@@ -1,10 +1,15 @@
 import { describe, it, expect } from "vitest";
 import { users, userRoleEnum } from "./schema/users";
+import { sessions } from "./schema/sessions";
 import { userRole, type UserRole } from "./schema/enums";
 
 describe("schema barrel export", () => {
   it("should re-export users table", () => {
     expect(users).toBeDefined();
+  });
+
+  it("should re-export sessions table", () => {
+    expect(sessions).toBeDefined();
   });
 
   it("should re-export userRole enum values", () => {

@@ -1,6 +1,6 @@
 # Story 1.1: Initialize Project Repository & Starter Template
 
-Status: review
+Status: done
 
 <!-- Note: Validation is optional. Run validate-create-story for quality check before dev-story. -->
 
@@ -149,3 +149,27 @@ GLM-5.1
 - web/src/components/ (moved from web/components/)
 - web/src/lib/ (moved from web/lib/)
 - web/src/hooks/ (moved from web/hooks/)
+
+### Review Findings
+
+- [x] [Review][Decision] `package.json` name is `"my-project"` not `"logiq"` — resolved: renamed to `"logiq-web"` per architecture.md
+- [x] [Review][Decision] Supabase deps present but `.env.example` labels them `(legacy)` — resolved: removed all Supabase deps and lib, stubbed auth routes
+- [x] [Review][Decision] `images: { unoptimized: true }` with no justification — resolved: removed, replaced with `reactStrictMode: true`
+- [x] [Review][Decision] Both `package-lock.json` and `pnpm-lock.yaml` exist — resolved: kept npm per architecture.md, removed pnpm-lock.yaml
+- [x] [Review][Decision] `.env.example` dual database strategy (Postgres + Supabase) unclear — resolved: removed Supabase vars, Postgres via Drizzle ORM only
+- [x] [Review][Decision] WCAG 2.1 AA contrast ratios unverified for oklch color pairings — resolved: adjusted lightness values to pass AA (4.5:1+)
+- [x] [Review][Patch] Font CSS variables misnamed: `--font-dm-sans` loads Inter, `--font-dm-mono` loads JetBrains Mono [`layout.tsx:7,13`]
+- [x] [Review][Patch] TypeScript `target: "ES6"` outdated for Next.js 16 + React 19 — should be ES2022+ [`tsconfig.json:7`]
+- [x] [Review][Patch] Missing `reactStrictMode: true` in Next.js config [`next.config.mjs`]
+- [x] [Review][Patch] `themeColor: '#0F172A'` doesn't match actual `--background` oklch value [`layout.tsx:23`]
+- [x] [Review][Patch] tsconfig includes `.next/dev/types/**/*.ts` — stale cache risk [`tsconfig.json:19`]
+- [x] [Review][Patch] Logo SVG lacks ARIA attributes — screen readers get no context [`logiq-logo.tsx:29-42`]
+- [x] [Review][Patch] Missing `suppressHydrationWarning` on `<html>` for theme provider [`layout.tsx:33`]
+- [x] [Review][Patch] Missing `typecheck` script in `package.json` [`package.json`]
+- [x] [Review][Patch] `.env.example` ships real-looking credentials (`logiq_dev`) — should use CHANGEME placeholders [`.env.example:3-4`]
+- [x] [Review][Patch] `--radius` not re-declared in `.dark` block (inconsistency) [`globals.css:46`]
+- [x] [Review][Patch] No `global-error.tsx` error boundary at root [`layout.tsx`]
+- [x] [Review][Defer] `bcryptjs` in prod deps with no auth code — deferred to auth story [`package.json:43`]
+- [x] [Review][Defer] Missing `db:seed` script — not in story scope [`package.json`]
+- [x] [Review][Defer] No `prefers-reduced-motion` handling in framer-motion — UX story concern [`logiq-logo.tsx:40-47`]
+- [x] [Review][Defer] `oklch()` has no fallback for older browsers — modern-only acceptable [`globals.css`]
