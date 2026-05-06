@@ -3,6 +3,8 @@ import {
   uuid,
   varchar,
   timestamp,
+  date,
+  boolean,
   pgEnum,
 } from "drizzle-orm/pg-core";
 import { sql } from "drizzle-orm";
@@ -18,6 +20,8 @@ export const users = pgTable(
     password_hash: varchar("password_hash", { length: 512 }),
     display_name: varchar("display_name", { length: 255 }).notNull(),
     role: userRoleEnum("role").default("user").notNull(),
+    date_of_birth: date("date_of_birth"),
+    parental_consent: boolean("parental_consent"),
     created_at: timestamp("created_at", { withTimezone: true })
       .defaultNow()
       .notNull(),

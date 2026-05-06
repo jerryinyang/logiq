@@ -66,4 +66,14 @@ describe("users table", () => {
     expect(columnNames).not.toContain("session_token");
     expect(columnNames).not.toContain("session_expires_at");
   });
+
+  it("should have date_of_birth as nullable date", () => {
+    expect(users.date_of_birth).toBeDefined();
+    expect(users.date_of_birth.columnType).toBe("PgDateString");
+  });
+
+  it("should have parental_consent as nullable boolean", () => {
+    expect(users.parental_consent).toBeDefined();
+    expect(users.parental_consent.columnType).toBe("PgBoolean");
+  });
 });

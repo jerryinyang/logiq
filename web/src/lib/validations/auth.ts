@@ -58,6 +58,41 @@ export const otpSchema = z.object({
     .regex(/^\d{6}$/, 'OTP must contain only numbers'),
 })
 
+export const registerPasswordSchema = z
+  .string()
+  .trim()
+  .min(8, "Password must be at least 8 characters")
+  .max(128, "Password must not exceed 128 characters")
+  .regex(/[A-Z]/, "Password must contain at least one uppercase letter")
+  .regex(/[a-z]/, "Password must contain at least one lowercase letter")
+  .regex(/[0-9]/, "Password must contain at least one number")
+  .regex(/[^A-Za-z0-9]/, "Password must contain at least one special character")
+
+const registerFields = {
+  email: z.string().trim().toLowerCase().pipe(emailSchema),
+  password: registerPasswordSchema,
+  confirmPassword: z.string().trim().min(1, "Please confirm your password"),
+  displayName: z.string()
+    .transform(val => val.trim())
+    .pipe(
+      z.string()
+        .min(2, "Display name must be at least 2 characters")
+        .max(50, "Display name must not exceed 50 characters")
+        .regex(/^[\p{L}\p{N}_\s]+$/u, "Display name can only contain letters, numbers, spaces, and underscores")
+    ),
+  dateOfBirth: z.string().optional(),
+  parentalConsent: z.boolean().optional(),
+}
+
+export const registerSchema = z.object(registerFields).refine((data) => data.password === data.confirmPassword, {
+  message: "Passwords do not match",
+  path: ["confirmPassword"],
+})
+
+export const registerApiSchema = z.object(registerFields).omit({ confirmPassword: true })
+
+export type RegisterFormData = z.infer<typeof registerSchema>
+
 export type SignUpFormData = z.infer<typeof signUpSchema>
 export type SignInFormData = z.infer<typeof signInSchema>
 export type ForgotPasswordFormData = z.infer<typeof forgotPasswordSchema>

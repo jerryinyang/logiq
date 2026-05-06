@@ -1,6 +1,0 @@
-import { NextRequest, NextResponse } from 'next/server'
-
-export async function GET(request: NextRequest) {
-  const { origin } = request.nextUrl
-  return NextResponse.redirect(`${origin}/auth/error?message=Auth callback not implemented yet`)
-}

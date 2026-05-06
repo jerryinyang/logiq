@@ -1,7 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
-import { useRouter } from 'next/navigation'
+import { useState } from 'react'
 import Link from 'next/link'
 import { motion } from 'framer-motion'
 import { useForm } from 'react-hook-form'
@@ -12,84 +11,24 @@ import { SubmitButton } from '@/components/auth/submit-button'
 import { FormAlert } from '@/components/auth/form-alert'
 import { StaggerContainer, StaggerItem } from '@/components/auth/animated-container'
 import { signInSchema, type SignInFormData } from '@/lib/validations/auth'
-import { saveSession, initActivityTracking, type StoredUser } from '@/lib/session'
 
 export default function HomePage() {
-  const router = useRouter()
   const [isLoading, setIsLoading] = useState(false)
   const [serverError, setServerError] = useState('')
 
   const {
     register,
     handleSubmit,
-    setError,
-    getValues,
     formState: { errors },
   } = useForm<SignInFormData>({
     resolver: zodResolver(signInSchema),
     mode: 'onBlur',
   })
 
-  // Initialize activity tracking for session management
-  useEffect(() => {
-    const cleanup = initActivityTracking()
-    return cleanup
-  }, [])
-
   const onSubmit = async (data: SignInFormData) => {
     setIsLoading(true)
-    setServerError('')
-
-    try {
-      const response = await fetch('/api/auth/sign-in', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(data),
-      })
-
-      const result = await response.json()
-
-      if (!response.ok) {
-        if (result.needsVerification) {
-          router.push(`/auth/verify-email?email=${encodeURIComponent(data.email)}`)
-          return
-        }
-
-        if (result.errors) {
-          result.errors.forEach((err: { field: string; message: string }) => {
-            if (err.field in data) {
-              setError(err.field as keyof SignInFormData, { message: err.message })
-            } else {
-              setServerError(err.message)
-            }
-          })
-        } else {
-          setServerError(result.message || 'Unable to sign in. Please try again.')
-        }
-        return
-      }
-
-      // Save user session to localStorage with 48-hour inactivity timeout
-      if (result.data?.user) {
-        const userData: StoredUser = {
-          id: result.data.user.id,
-          email: result.data.user.email,
-          firstName: result.data.user.firstName,
-          lastName: result.data.user.lastName,
-          fullName: result.data.user.firstName && result.data.user.lastName 
-            ? `${result.data.user.firstName} ${result.data.user.lastName}`
-            : result.data.user.firstName || result.data.user.email,
-        }
-        saveSession(userData)
-      }
-
-      // Redirect to dashboard
-      router.push('/dashboard')
-    } catch {
-      setServerError('Network error. Please check your connection and try again.')
-    } finally {
-      setIsLoading(false)
-    }
+    setServerError('Sign in is not yet implemented. Coming soon!')
+    setIsLoading(false)
   }
 
   return (
@@ -202,14 +141,6 @@ export default function HomePage() {
                       error={errors.password?.message}
                       {...register('password')}
                     />
-                    <div className="text-right">
-                      <Link 
-                        href={`/auth/forgot-password${getValues('email') ? `?email=${encodeURIComponent(getValues('email'))}` : ''}`}
-                        className="text-sm text-muted-foreground hover:text-foreground transition-colors"
-                      >
-                        Forgot password?
-                      </Link>
-                    </div>
                   </div>
                 </StaggerItem>
 
@@ -223,7 +154,7 @@ export default function HomePage() {
                   <p className="text-center text-sm text-muted-foreground">
                     Don&apos;t have an account?{' '}
                     <Link 
-                      href="/auth/sign-up" 
+                      href="/register" 
                       className="font-medium text-foreground hover:text-accent transition-colors"
                     >
                       Sign up
