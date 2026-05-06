@@ -24,4 +24,10 @@ describe("schema barrel export", () => {
   it("should re-export userRoleEnum pgEnum", () => {
     expect(userRoleEnum).toBeDefined();
   });
+
+  it("should have COPPA-related columns on users table", () => {
+    const columnNames = Object.keys(users);
+    expect(columnNames).toContain("date_of_birth");
+    expect(columnNames).toContain("parental_consent");
+  });
 });
