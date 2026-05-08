@@ -10,9 +10,13 @@ import { FormInput } from '@/components/auth/form-input'
 import { SubmitButton } from '@/components/auth/submit-button'
 import { FormAlert } from '@/components/auth/form-alert'
 import { StaggerContainer, StaggerItem } from '@/components/auth/animated-container'
+import { useRouter, useSearchParams } from 'next/navigation'
+import { toast } from 'sonner'
 import { signInSchema, type SignInFormData } from '@/lib/validations/auth'
 
 export default function HomePage() {
+  const router = useRouter()
+  const searchParams = useSearchParams()
   const [isLoading, setIsLoading] = useState(false)
   const [serverError, setServerError] = useState('')
 
@@ -27,8 +31,38 @@ export default function HomePage() {
 
   const onSubmit = async (data: SignInFormData) => {
     setIsLoading(true)
-    setServerError('Sign in is not yet implemented. Coming soon!')
-    setIsLoading(false)
+    setServerError('')
+
+    try {
+      const response = await fetch('/api/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          email: data.email,
+          password: data.password,
+          rememberMe: data.rememberMe ?? false,
+        }),
+      })
+
+      const result = await response.json()
+
+      if (!response.ok) {
+        if (result.errors) {
+          setServerError(result.errors[0]?.message || 'Validation failed')
+        } else {
+          setServerError(result.message || 'Invalid email or password')
+        }
+        return
+      }
+
+      toast.success('Welcome back!')
+      const redirectTo = searchParams.get('redirect') || '/dashboard'
+      router.push(redirectTo)
+    } catch {
+      setServerError('Network error. Please check your connection.')
+    } finally {
+      setIsLoading(false)
+    }
   }
 
   return (
@@ -141,6 +175,25 @@ export default function HomePage() {
                       error={errors.password?.message}
                       {...register('password')}
                     />
+                  </div>
+                </StaggerItem>
+
+                <StaggerItem>
+                  <div className="flex items-center justify-between">
+                    <label className="flex items-center gap-2 text-sm text-muted-foreground cursor-pointer select-none">
+                      <input
+                        type="checkbox"
+                        className="w-4 h-4 rounded border-border bg-background text-accent focus:ring-accent"
+                        {...register('rememberMe')}
+                      />
+                      Remember me
+                    </label>
+                    <Link
+                      href="/auth/forgot-password"
+                      className="text-sm font-medium text-foreground hover:text-accent transition-colors"
+                    >
+                      Forgot password?
+                    </Link>
                   </div>
                 </StaggerItem>
 

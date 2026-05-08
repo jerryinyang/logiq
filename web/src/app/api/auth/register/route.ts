@@ -91,7 +91,7 @@ export async function POST(request: Request) {
         { status: 409 },
       )
     }
-    console.error("Registration error: Please check server logs for details.")
+    console.error("Registration error:", error)
     return NextResponse.json(
       { success: false, message: "An unexpected error occurred. Please try again." },
       { status: 500 },

@@ -2,19 +2,38 @@ import { db } from "@/lib/db"
 import { sessions, users } from "@/lib/db/schema"
 import { eq, lt } from "drizzle-orm"
 import { cookies } from "next/headers"
-import { createHash, randomBytes } from "crypto"
+import { createHmac, randomBytes } from "crypto"
 
 const SESSION_COOKIE = "logiq_session"
+const CSRF_COOKIE = "logiq_csrf"
 const SESSION_DURATION_DAYS = 30
+const MAX_SESSIONS_PER_USER = 5
+const SESSION_SECRET = process.env.SESSION_SECRET || "dev-secret-change-in-production"
 
 function hashToken(token: string): string {
-  return createHash("sha256").update(token).digest("hex")
+  return createHmac("sha256", SESSION_SECRET).update(token).digest("hex")
 }
 
-export async function createSession(userId: string): Promise<string> {
+export async function createSession(userId: string, days: number = SESSION_DURATION_DAYS): Promise<string> {
+  if (!userId) throw new Error("userId is required")
+  if (days <= 0) throw new Error("days must be positive")
+
   const token = randomBytes(32).toString("hex")
   const tokenHash = hashToken(token)
-  const expiresAt = new Date(Date.now() + SESSION_DURATION_DAYS * 24 * 60 * 60 * 1000)
+  const expiresAt = new Date(Date.now() + days * 24 * 60 * 60 * 1000)
+
+  const existingSessions = await db
+    .select({ token: sessions.token, expires_at: sessions.expires_at })
+    .from(sessions)
+    .where(eq(sessions.user_id, userId))
+
+  if (existingSessions.length >= MAX_SESSIONS_PER_USER) {
+    existingSessions.sort((a, b) => a.expires_at.getTime() - b.expires_at.getTime())
+    const toDeleteCount = existingSessions.length - MAX_SESSIONS_PER_USER + 1
+    for (let i = 0; i < toDeleteCount; i++) {
+      await db.delete(sessions).where(eq(sessions.token, existingSessions[i].token))
+    }
+  }
 
   await db.insert(sessions).values({
     user_id: userId,
@@ -25,14 +44,14 @@ export async function createSession(userId: string): Promise<string> {
   return token
 }
 
-export async function setSessionCookie(token: string): Promise<void> {
+export async function setSessionCookie(token: string, days: number = SESSION_DURATION_DAYS): Promise<void> {
   const cookieStore = await cookies()
   cookieStore.set(SESSION_COOKIE, token, {
     httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
+    secure: process.env.NODE_ENV === "production" || process.env.FORCE_SECURE_COOKIE === "true",
     sameSite: "lax",
     path: "/",
-    maxAge: SESSION_DURATION_DAYS * 24 * 60 * 60,
+    maxAge: days * 24 * 60 * 60,
   })
 }
 
@@ -43,18 +62,7 @@ export async function getSessionUser() {
 
   const tokenHash = hashToken(token)
 
-  const [session] = await db
-    .select()
-    .from(sessions)
-    .where(eq(sessions.token, tokenHash))
-
-  if (!session) return null
-  if (new Date() > session.expires_at) {
-    await db.delete(sessions).where(eq(sessions.token, tokenHash))
-    return null
-  }
-
-  const [user] = await db
+  const results = await db
     .select({
       id: users.id,
       email: users.email,
@@ -64,11 +72,23 @@ export async function getSessionUser() {
       parental_consent: users.parental_consent,
       created_at: users.created_at,
       updated_at: users.updated_at,
+      session_expires_at: sessions.expires_at,
+      session_token: sessions.token,
     })
-    .from(users)
-    .where(eq(users.id, session.user_id))
+    .from(sessions)
+    .innerJoin(users, eq(users.id, sessions.user_id))
+    .where(eq(sessions.token, tokenHash))
 
-  return user ?? null
+  if (results.length === 0) return null
+
+  const row = results[0]
+  if (new Date() > row.session_expires_at) {
+    await db.delete(sessions).where(eq(sessions.token, tokenHash))
+    return null
+  }
+
+  const { session_expires_at: _, session_token: __, ...user } = row
+  return user
 }
 
 export async function clearSession(): Promise<void> {
@@ -83,4 +103,16 @@ export async function clearSession(): Promise<void> {
 
 export async function cleanExpiredSessions(): Promise<void> {
   await db.delete(sessions).where(lt(sessions.expires_at, new Date()))
+}
+
+export function generateCsrfToken(): string {
+  return randomBytes(32).toString("hex")
+}
+
+export function hashCsrfToken(token: string): string {
+  return hashToken(token)
+}
+
+export function getCsrfCookieName(): string {
+  return CSRF_COOKIE
 }

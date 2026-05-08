@@ -1,5 +1,12 @@
 # Deferred Work
 
+## Deferred from: code review of story-1-4 (2026-05-08)
+
+- In-memory rate limit has no shared state across serverless instances — Module-level `Map` isolated per function instance in Vercel/Lambda. Pre-existing design from Story 1.3.
+- Race condition in in-memory rate limit counter — `entry.count++` is non-atomic read-modify-write. Pre-existing from Story 1.3.
+- Memory leak in rate limit Map — keys grow unbounded with no TTL eviction except on-access. Pre-existing from Story 1.3.
+- `checkRateLimit` return type inconsistency — `retryAfterSeconds` property guarded by `"in rateResult"` check suggesting optional return type. Pre-existing from Story 1.3.
+
 ## Deferred from: code review of story-1-1 (2026-05-05)
 
 - `bcryptjs` in prod deps with no auth code — belongs to auth story implementation
@@ -35,3 +42,8 @@
 - Password strength meter missing 128-char max-length check — shows "Strong" for passwords that will be rejected by the schema's `.max(128)`.
 - No unit tests for `registerApiSchema` in `auth.test.ts` — API schema lacks direct test coverage independent of route integration tests.
 - Registration success returns HTTP 200 instead of 201 — conformance with REST semantics and spec (I/O matrix specifies 201).
+
+## Deferred from: code review of 1-4-implement-user-login-with-better-auth (2026-05-08)
+
+- Custom auth instead of Better Auth — Spec requires Better Auth but codebase uses custom session management. Pre-existing from earlier stories (1.3), not introduced by this change.
+- Rate limit key uses raw x-forwarded-for without validation — Pre-existing from Story 1.3 review; login route inherits same pattern.

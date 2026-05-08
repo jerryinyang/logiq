@@ -9,9 +9,25 @@ import { StaggerContainer, StaggerItem } from '@/components/auth/animated-contai
 import { XCircle, ArrowLeft } from 'lucide-react'
 import { motion } from 'framer-motion'
 
+const oauthErrorMessages: Record<string, string> = {
+  unknown_provider: "The requested authentication provider is not supported.",
+  provider_not_configured: "This sign-in method is not configured. Please contact support.",
+  invalid_request: "Invalid authentication request. Please try again.",
+  csrf_detected: "Security check failed. Please try signing in again.",
+  token_exchange_failed: "Could not complete authentication with the provider. Please try again.",
+  profile_fetch_failed: "Could not retrieve your profile information. Please try again.",
+  email_required: "Your account must have a public email to sign in with this provider.",
+  rate_limited: "Too many attempts. Please wait a moment and try again.",
+  initiation_failed: "Could not start the sign-in process. Please try again.",
+  callback_failed: "Authentication failed. Please try again.",
+}
+
 function AuthErrorContent() {
   const searchParams = useSearchParams()
-  const message = searchParams.get('message') || 'An authentication error occurred'
+  const errorCode = searchParams.get('error')
+  const message = errorCode
+    ? (oauthErrorMessages[errorCode] ?? `Authentication error: ${errorCode}`)
+    : (searchParams.get('message') || 'An authentication error occurred')
 
   return (
     <AuthLayout

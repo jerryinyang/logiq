@@ -1,7 +1,7 @@
 'use client'
 
 import { motion, AnimatePresence } from 'framer-motion'
-import { Check, X } from 'lucide-react'
+import { BadgeCheck, X } from 'lucide-react'
 import { useMemo } from 'react'
 
 interface PasswordStrengthProps {
@@ -93,7 +93,7 @@ export function PasswordStrength({ password, show = true }: PasswordStrengthProp
                   `}
                 >
                   {passed ? (
-                    <Check className="w-3 h-3" />
+                    <BadgeCheck className="w-3 h-3 text-white rounded-full " />
                   ) : (
                     <X className="w-3 h-3 text-muted-foreground/50" />
                   )}
