@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from "vitest"
 import { db } from "@/lib/db"
-import { createSession, clearSession, generateCsrfToken, hashCsrfToken, getCsrfCookieName } from "./auth"
+import { createSession, clearSession, revokeUserSessions, generateCsrfToken, hashCsrfToken, getCsrfCookieName } from "./auth"
 
 vi.mock("@/lib/db", () => ({
   db: {
@@ -104,6 +104,26 @@ describe("clearSession", () => {
     })
 
     await expect(clearSession()).resolves.not.toThrow()
+  })
+})
+
+describe("revokeUserSessions", () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+  })
+
+  it("should delete all sessions for a user", async () => {
+    ;(db.delete as ReturnType<typeof vi.fn>).mockReturnValue({
+      where: vi.fn().mockResolvedValue(undefined),
+    })
+
+    await revokeUserSessions("user-1")
+
+    expect(db.delete).toHaveBeenCalled()
+  })
+
+  it("should reject empty userId", async () => {
+    await expect(revokeUserSessions("")).rejects.toThrow("userId is required")
   })
 })
 

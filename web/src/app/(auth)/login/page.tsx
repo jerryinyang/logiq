@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useEffect } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { useForm } from 'react-hook-form'
@@ -20,6 +20,13 @@ export default function LoginPage() {
   const searchParams = useSearchParams()
   const [isLoading, setIsLoading] = useState(false)
   const [serverError, setServerError] = useState('')
+
+  useEffect(() => {
+    const reset = searchParams.get('reset')
+    if (reset === 'success') {
+      toast.success('Password reset successfully. Please log in with your new password.')
+    }
+  }, [searchParams])
 
   const {
     register,
@@ -124,7 +131,7 @@ export default function LoginPage() {
                 Remember me
               </label>
               <Link
-                href="/auth/forgot-password"
+                href="/forgot-password"
                 className="text-sm font-medium text-foreground hover:text-accent transition-colors"
               >
                 Forgot password?

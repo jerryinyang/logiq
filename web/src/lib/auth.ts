@@ -101,6 +101,11 @@ export async function clearSession(): Promise<void> {
   cookieStore.delete(SESSION_COOKIE)
 }
 
+export async function revokeUserSessions(userId: string): Promise<void> {
+  if (!userId) throw new Error("userId is required")
+  await db.delete(sessions).where(eq(sessions.user_id, userId))
+}
+
 export async function cleanExpiredSessions(): Promise<void> {
   await db.delete(sessions).where(lt(sessions.expires_at, new Date()))
 }

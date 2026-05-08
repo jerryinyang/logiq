@@ -1,6 +1,7 @@
 import { describe, it, expect } from "vitest";
 import { users, userRoleEnum } from "./schema/users";
 import { sessions } from "./schema/sessions";
+import { passwordResetTokens } from "./schema/password-reset-tokens";
 import { userRole, type UserRole } from "./schema/enums";
 
 describe("schema barrel export", () => {
@@ -10,6 +11,10 @@ describe("schema barrel export", () => {
 
   it("should re-export sessions table", () => {
     expect(sessions).toBeDefined();
+  });
+
+  it("should re-export passwordResetTokens table", () => {
+    expect(passwordResetTokens).toBeDefined();
   });
 
   it("should re-export userRole enum values", () => {
