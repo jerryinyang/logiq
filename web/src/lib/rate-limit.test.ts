@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach } from "vitest"
-import { checkRateLimit, _resetForTesting } from "./rate-limit"
+import { checkRateLimit, checkForgotPasswordRateLimit, _resetForTesting } from "./rate-limit"
 
 describe("checkRateLimit", () => {
   beforeEach(() => {
@@ -38,5 +38,45 @@ describe("checkRateLimit", () => {
     const result = checkRateLimit("key-b")
     expect(result.allowed).toBe(true)
     expect(result.remaining).toBe(4)
+  })
+})
+
+describe("checkForgotPasswordRateLimit", () => {
+  beforeEach(() => {
+    _resetForTesting()
+  })
+
+  it("should allow first request with 2 remaining", () => {
+    const result = checkForgotPasswordRateLimit("forgot:user@example.com")
+    expect(result.allowed).toBe(true)
+    expect(result.remaining).toBe(2)
+  })
+
+  it("should allow up to 3 requests per hour", () => {
+    const key = "forgot:test@example.com"
+    for (let i = 0; i < 3; i++) {
+      const result = checkForgotPasswordRateLimit(key)
+      expect(result.allowed).toBe(true)
+    }
+  })
+
+  it("should block the 4th request and provide retryAfterSeconds", () => {
+    const key = "forgot:limit@example.com"
+    for (let i = 0; i < 3; i++) {
+      checkForgotPasswordRateLimit(key)
+    }
+    const result = checkForgotPasswordRateLimit(key)
+    expect(result.allowed).toBe(false)
+    expect(result.remaining).toBe(0)
+    expect(result.retryAfterSeconds).toBeGreaterThan(0)
+  })
+
+  it("should use separate windows for different emails", () => {
+    for (let i = 0; i < 3; i++) {
+      checkForgotPasswordRateLimit("forgot:email-a@example.com")
+    }
+    const result = checkForgotPasswordRateLimit("forgot:email-b@example.com")
+    expect(result.allowed).toBe(true)
+    expect(result.remaining).toBe(2)
   })
 })

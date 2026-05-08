@@ -1,6 +1,6 @@
 const APP_NAME = "LOGIQ";
 const APP_URL =
-  process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
+  process.env.APP_URL || process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
 
 export function buildPasswordResetUrl(token: string): string {
   return `${APP_URL}/reset-password?token=${encodeURIComponent(token)}`;
@@ -81,12 +81,13 @@ async function sendViaSmtp(
   subject: string,
   html: string,
 ): Promise<void> {
-  const nodemailer = await getNodemailer();
-  if (!nodemailer) {
-    console.warn(
-      "[EMAIL] nodemailer not installed. Email not sent. Install with: pnpm add nodemailer @types/nodemailer",
+  let nodemailer: typeof import("nodemailer");
+  try {
+    nodemailer = await import("nodemailer");
+  } catch {
+    throw new Error(
+      "nodemailer is not installed. Install with: pnpm add nodemailer, or set EMAIL_PROVIDER=resend and RESEND_API_KEY.",
     );
-    return;
   }
 
   const transporter = nodemailer.default.createTransport({

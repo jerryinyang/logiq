@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useCallback, useEffect } from 'react'
+import { useState, useCallback, useEffect, useRef } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { useForm } from 'react-hook-form'
@@ -21,9 +21,12 @@ export default function LoginPage() {
   const [isLoading, setIsLoading] = useState(false)
   const [serverError, setServerError] = useState('')
 
+  const toastShownRef = useRef(false)
+
   useEffect(() => {
     const reset = searchParams.get('reset')
-    if (reset === 'success') {
+    if (reset === 'success' && !toastShownRef.current) {
+      toastShownRef.current = true
       toast.success('Password reset successfully. Please log in with your new password.')
     }
   }, [searchParams])

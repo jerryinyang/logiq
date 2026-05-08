@@ -1,17 +1,14 @@
 import { NextResponse } from "next/server"
 import { db } from "@/lib/db"
 import { users, passwordResetTokens } from "@/lib/db/schema"
-import { eq, gt } from "drizzle-orm"
+import { eq } from "drizzle-orm"
 import { createHash } from "crypto"
 import bcrypt from "bcryptjs"
 import { resetPasswordSchema } from "@/lib/validations/auth"
 import { revokeUserSessions } from "@/lib/auth"
+import { hashResetToken } from "@/lib/auth/tokens"
 
 const BCRYPT_COST = 12
-
-function hashToken(token: string): string {
-  return createHash("sha256").update(token).digest("hex")
-}
 
 export async function POST(request: Request) {
   let body: unknown
@@ -41,52 +38,70 @@ export async function POST(request: Request) {
     return NextResponse.json({ message: "Validation failed", errors }, { status: 422 })
   }
 
-  const tokenHash = hashToken(token)
-
-  const [resetRecord] = await db
-    .select({
-      id: passwordResetTokens.id,
-      user_id: passwordResetTokens.user_id,
-      expires_at: passwordResetTokens.expires_at,
-    })
-    .from(passwordResetTokens)
-    .where(eq(passwordResetTokens.token_hash, tokenHash))
-
-  if (!resetRecord) {
-    return NextResponse.json(
-      { message: "Invalid or expired reset link" },
-      { status: 400 },
-    )
-  }
-
-  if (new Date() > resetRecord.expires_at) {
-    await db
-      .delete(passwordResetTokens)
-      .where(eq(passwordResetTokens.id, resetRecord.id))
-    return NextResponse.json(
-      { message: "Invalid or expired reset link" },
-      { status: 400 },
-    )
-  }
-
+  const tokenHash = hashResetToken(token)
   const { password } = parsed.data
   const passwordHash = await bcrypt.hash(password, BCRYPT_COST)
 
-  await db.transaction(async (tx) => {
-    await tx
-      .update(users)
-      .set({
-        password_hash: passwordHash,
-        updated_at: new Date(),
-      })
-      .where(eq(users.id, resetRecord.user_id))
+  let userId: string | null = null
 
-    await tx
-      .delete(passwordResetTokens)
-      .where(eq(passwordResetTokens.id, resetRecord.id))
-  })
+  try {
+    await db.transaction(async (tx) => {
+      const [resetRecord] = await tx
+        .select({
+          id: passwordResetTokens.id,
+          user_id: passwordResetTokens.user_id,
+          expires_at: passwordResetTokens.expires_at,
+        })
+        .from(passwordResetTokens)
+        .where(eq(passwordResetTokens.token_hash, tokenHash))
+        .limit(1)
 
-  await revokeUserSessions(resetRecord.user_id)
+      if (!resetRecord) {
+        throw new Error("INVALID_TOKEN")
+      }
+
+      if (new Date() > resetRecord.expires_at) {
+        await tx
+          .delete(passwordResetTokens)
+          .where(eq(passwordResetTokens.id, resetRecord.id))
+        throw new Error("EXPIRED_TOKEN")
+      }
+
+      await tx
+        .update(users)
+        .set({
+          password_hash: passwordHash,
+          updated_at: new Date(),
+        })
+        .where(eq(users.id, resetRecord.user_id))
+
+      await tx
+        .delete(passwordResetTokens)
+        .where(eq(passwordResetTokens.id, resetRecord.id))
+
+      userId = resetRecord.user_id
+    })
+  } catch (error) {
+    if (error instanceof Error && error.message === "INVALID_TOKEN") {
+      return NextResponse.json(
+        { message: "Invalid or expired reset link" },
+        { status: 400 },
+      )
+    }
+    if (error instanceof Error && error.message === "EXPIRED_TOKEN") {
+      return NextResponse.json(
+        { message: "Invalid or expired reset link" },
+        { status: 400 },
+      )
+    }
+    throw error
+  }
+
+  try {
+    await revokeUserSessions(userId!)
+  } catch (error) {
+    console.error("Failed to revoke sessions after password reset:", error)
+  }
 
   return NextResponse.json(
     { message: "Password reset successfully. Please log in with your new password." },

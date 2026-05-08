@@ -1,16 +1,17 @@
 import { NextResponse } from "next/server"
 import { db } from "@/lib/db"
 import { users, passwordResetTokens } from "@/lib/db/schema"
-import { eq, sql } from "drizzle-orm"
-import { randomBytes, createHash } from "crypto"
+import { eq } from "drizzle-orm"
+import { randomBytes } from "crypto"
 import { forgotPasswordSchema } from "@/lib/validations/auth"
-import { checkRateLimit } from "@/lib/rate-limit"
+import { checkForgotPasswordRateLimit, checkRateLimit } from "@/lib/rate-limit"
 import { sendPasswordResetEmail, buildPasswordResetUrl } from "@/lib/email"
+import { hashResetToken } from "@/lib/auth/tokens"
 
 const TOKEN_TTL_HOURS = 1
 
-function hashToken(token: string): string {
-  return createHash("sha256").update(token).digest("hex")
+const GENERIC_SUCCESS = {
+  message: "If an account exists with this email, you'll receive a reset link",
 }
 
 export async function POST(request: Request) {
@@ -28,65 +29,55 @@ export async function POST(request: Request) {
 
   const parsed = forgotPasswordSchema.safeParse(body)
   if (!parsed.success) {
-    return NextResponse.json(
-      {
-        message:
-          "If an account exists with this email, you'll receive a reset link",
-      },
-      { status: 200 },
-    )
+    return NextResponse.json(GENERIC_SUCCESS, { status: 200 })
   }
 
   const { email } = parsed.data
   const normalizedEmail = email.toLowerCase().trim()
 
-  const rateLimitKey = `forgot-password:${normalizedEmail}`
-  const { allowed } = checkRateLimit(rateLimitKey)
-
-  if (!allowed) {
-    return NextResponse.json(
-      {
-        message:
-          "If an account exists with this email, you'll receive a reset link",
-      },
-      { status: 200 },
-    )
+  const perIpResult = checkRateLimit(`forgot-password-ip:${ip}`)
+  if (!perIpResult.allowed) {
+    return NextResponse.json(GENERIC_SUCCESS, { status: 200 })
   }
 
-  const [user] = await db
-    .select({ id: users.id })
-    .from(users)
-    .where(eq(users.email, normalizedEmail))
+  const perEmailResult = checkForgotPasswordRateLimit(`forgot-password:${normalizedEmail}`)
+  if (!perEmailResult.allowed) {
+    return NextResponse.json(GENERIC_SUCCESS, { status: 200 })
+  }
 
-  if (user) {
-    const token = randomBytes(32).toString("hex")
-    const tokenHash = hashToken(token)
-    const expiresAt = new Date(Date.now() + TOKEN_TTL_HOURS * 60 * 60 * 1000)
+  try {
+    const [user] = await db
+      .select({ id: users.id })
+      .from(users)
+      .where(eq(users.email, normalizedEmail))
 
-    await db.delete(passwordResetTokens).where(
-      eq(passwordResetTokens.user_id, user.id),
-    )
+    if (user) {
+      const token = randomBytes(32).toString("hex")
+      const tokenHash = hashResetToken(token)
+      const expiresAt = new Date(Date.now() + TOKEN_TTL_HOURS * 60 * 60 * 1000)
 
-    await db.insert(passwordResetTokens).values({
-      user_id: user.id,
-      token_hash: tokenHash,
-      expires_at: expiresAt,
-    })
+      await db.transaction(async (tx) => {
+        await tx
+          .delete(passwordResetTokens)
+          .where(eq(passwordResetTokens.user_id, user.id))
+        await tx.insert(passwordResetTokens).values({
+          user_id: user.id,
+          token_hash: tokenHash,
+          expires_at: expiresAt,
+        })
+      })
 
-    const resetUrl = buildPasswordResetUrl(token)
+      const resetUrl = buildPasswordResetUrl(token)
 
-    try {
-      await sendPasswordResetEmail(normalizedEmail, resetUrl)
-    } catch (error) {
-      console.error("Failed to send password reset email:", error)
+      try {
+        await sendPasswordResetEmail(normalizedEmail, resetUrl)
+      } catch (error) {
+        console.error("Failed to send password reset email:", error)
+      }
     }
+  } catch (error) {
+    console.error("Forgot password error:", error)
   }
 
-  return NextResponse.json(
-    {
-      message:
-        "If an account exists with this email, you'll receive a reset link",
-    },
-    { status: 200 },
-  )
+  return NextResponse.json(GENERIC_SUCCESS, { status: 200 })
 }

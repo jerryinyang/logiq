@@ -9,11 +9,13 @@ vi.mock("@/lib/db", () => ({
     select: vi.fn(),
     delete: vi.fn(),
     insert: vi.fn(),
+    transaction: vi.fn(),
   },
 }))
 
 vi.mock("@/lib/rate-limit", () => ({
-  checkRateLimit: vi.fn(() => ({ allowed: true, remaining: 2 })),
+  checkRateLimit: vi.fn(() => ({ allowed: true, remaining: 4 })),
+  checkForgotPasswordRateLimit: vi.fn(() => ({ allowed: true, remaining: 2 })),
 }))
 
 vi.mock("@/lib/email", () => ({
@@ -21,13 +23,12 @@ vi.mock("@/lib/email", () => ({
   buildPasswordResetUrl: vi.fn((token: string) => `http://localhost:3000/reset-password?token=${token}`),
 }))
 
+vi.mock("@/lib/auth/tokens", () => ({
+  hashResetToken: vi.fn(() => "mocked_token_hash"),
+}))
+
 vi.mock("crypto", () => ({
   randomBytes: vi.fn(() => Buffer.from("a".repeat(64))),
-  createHash: vi.fn(() => ({
-    update: vi.fn().mockReturnValue({
-      digest: vi.fn(() => "mocked_token_hash"),
-    }),
-  })),
 }))
 
 const mockUser = {
@@ -62,6 +63,10 @@ describe("POST /api/auth/forgot-password", () => {
     vi.clearAllMocks()
     ;(rateLimit.checkRateLimit as ReturnType<typeof vi.fn>).mockReturnValue({
       allowed: true,
+      remaining: 4,
+    })
+    ;(rateLimit.checkForgotPasswordRateLimit as ReturnType<typeof vi.fn>).mockReturnValue({
+      allowed: true,
       remaining: 2,
     })
     ;(db.select as ReturnType<typeof vi.fn>).mockImplementation(
@@ -69,6 +74,14 @@ describe("POST /api/auth/forgot-password", () => {
     )
     ;(db.delete as ReturnType<typeof vi.fn>).mockImplementation(createDeleteMock())
     ;(db.insert as ReturnType<typeof vi.fn>).mockImplementation(createInsertMock())
+    ;(db.transaction as ReturnType<typeof vi.fn>).mockImplementation(
+      async (cb: (tx: unknown) => Promise<void>) => {
+        await cb({
+          delete: vi.fn().mockReturnValue({ where: vi.fn().mockResolvedValue(undefined) }),
+          insert: vi.fn().mockReturnValue({ values: vi.fn().mockResolvedValue(undefined) }),
+        })
+      },
+    )
   })
 
   it("should return generic success message for existing user", async () => {
@@ -133,8 +146,7 @@ describe("POST /api/auth/forgot-password", () => {
 
     await POST(request)
 
-    expect(db.delete).toHaveBeenCalled()
-    expect(db.insert).toHaveBeenCalled()
+    expect(db.transaction).toHaveBeenCalled()
   })
 
   it("should send the reset email for existing user", async () => {
@@ -172,16 +184,40 @@ describe("POST /api/auth/forgot-password", () => {
 
     await POST(request)
 
-    expect(db.delete).not.toHaveBeenCalled()
-    expect(db.insert).not.toHaveBeenCalled()
+    expect(db.transaction).not.toHaveBeenCalled()
     expect(emailModule.sendPasswordResetEmail).not.toHaveBeenCalled()
   })
 
-  it("should return generic message when rate limited", async () => {
-    ;(rateLimit.checkRateLimit as ReturnType<typeof vi.fn>).mockReturnValue({
+  it("should return generic message when per-email rate limited", async () => {
+    ;(rateLimit.checkForgotPasswordRateLimit as ReturnType<typeof vi.fn>).mockReturnValue({
       allowed: false,
       remaining: 0,
       retryAfterSeconds: 3600,
+    })
+
+    const request = new Request(
+      "http://localhost:3000/api/auth/forgot-password",
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: "john@example.com" }),
+      },
+    )
+
+    const response = await POST(request)
+    const data = await response.json()
+
+    expect(response.status).toBe(200)
+    expect(data.message).toContain(
+      "If an account exists with this email, you'll receive a reset link",
+    )
+  })
+
+  it("should return generic message when per-IP rate limited", async () => {
+    ;(rateLimit.checkRateLimit as ReturnType<typeof vi.fn>).mockReturnValue({
+      allowed: false,
+      remaining: 0,
+      retryAfterSeconds: 60,
     })
 
     const request = new Request(
@@ -280,5 +316,28 @@ describe("POST /api/auth/forgot-password", () => {
     const response = await POST(request)
 
     expect(response.status).toBe(200)
+  })
+
+  it("should return 200 even if DB query fails (prevent enumeration)", async () => {
+    ;(db.select as ReturnType<typeof vi.fn>).mockImplementation(() => {
+      throw new Error("DB connection failed")
+    })
+
+    const request = new Request(
+      "http://localhost:3000/api/auth/forgot-password",
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: "john@example.com" }),
+      },
+    )
+
+    const response = await POST(request)
+    const data = await response.json()
+
+    expect(response.status).toBe(200)
+    expect(data.message).toContain(
+      "If an account exists with this email, you'll receive a reset link",
+    )
   })
 })

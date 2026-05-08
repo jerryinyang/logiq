@@ -30,6 +30,10 @@ vi.mock("crypto", () => ({
   })),
 }))
 
+vi.mock("@/lib/auth/tokens", () => ({
+  hashResetToken: vi.fn(() => "mocked_token_hash"),
+}))
+
 const mockToken = "valid_reset_token_1234567890abcdef"
 const mockTokenHash = "mocked_token_hash"
 const mockUserId = "550e8400-e29b-41d4-a716-446655440000"
