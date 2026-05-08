@@ -941,9 +941,9 @@ web/
 
 ### Development Workflow Integration
 
-**Development Server Structure:** `pnpm dev` starts Next.js dev server with HMR. `docker compose up` runs local PostgreSQL for DB integration. Drizzle Studio (`pnpm db:studio`) for database browsing.
+**Development Server Structure:** `npm run dev` starts Next.js dev server with HMR. `docker compose up` runs local PostgreSQL for DB integration. Drizzle Studio (`npm run db:studio`) for database browsing.
 
-**Build Process Structure:** `pnpm build` produces optimized Next.js build. `pnpm db:generate` and `pnpm db:migrate` for schema migrations before deployment.
+**Build Process Structure:** `npm run build` produces optimized Next.js build. `npm run db:generate` and `npm run db:migrate` for schema migrations before deployment.
 
 **Deployment Structure:** Vercel handles build and deployment automatically on git push. Environment variables configured in Vercel dashboard. Database migrations run as pre-deployment step via `drizzle-kit migrate`.
 

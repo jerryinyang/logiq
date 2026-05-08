@@ -300,8 +300,8 @@ So that the team has a consistent, production-ready foundation to build on.
 **When** I run `npx create-next-app@latest` with `--typescript --tailwind --eslint --app --src-dir --import-alias "@/*"`
 **Then** the project scaffolds with App Router, TypeScript strict mode, and Tailwind CSS 4
 **And** `npx shadcn@latest init` initializes shadcn/ui with default components
-**And** `pnpm dev` starts the dev server with HMR
-**And** `pnpm build` completes without errors
+**And** `npm run dev` starts the dev server with HMR
+**And** `npm run build` completes without errors
 
 **Given** the initialized project
 **When** I review `tsconfig.json`
@@ -323,8 +323,8 @@ So that all user and authentication data is stored reliably and type-safely.
 **When** Drizzle ORM is installed and configured (`drizzle.config.ts`)
 **Then** the schema domain files exist in `lib/db/schema/`: `users.ts`, `enums.ts`
 **And** the barrel re-export is at `lib/db/schema.ts`
-**And** `pnpm db:generate` produces migration files
-**And** `pnpm db:migrate` applies them without errors
+**And** `npm run db:generate` produces migration files
+**And** `npm run db:migrate` applies them without errors
 
 **Given** the `users` table schema
 **When** it is defined
@@ -666,7 +666,7 @@ So that the progression system can deliver the right challenges to users at the 
 - `skill_cluster_challenges`: junction table linking challenges to clusters with `is_checkpoint` flag
 
 **Given** the schemas are defined
-**When** I run `pnpm db:generate` and `pnpm db:migrate`
+**When** I run `npm run db:generate` and `npm run db:migrate`
 **Then** migrations apply without errors
 **And** the barrel re-export in `lib/db/schema.ts` includes the new schemas
 

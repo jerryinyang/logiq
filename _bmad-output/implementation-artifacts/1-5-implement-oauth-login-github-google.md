@@ -1,6 +1,6 @@
 # Story 1.5: Implement OAuth Login (GitHub & Google)
 
-Status: done
+Status: ready-for-dev
 
 <!-- Note: Validation is optional. Run validate-create-story for quality check before dev-story. -->
 
@@ -18,53 +18,53 @@ So that I can onboard quickly without managing another password.
 
 ## Tasks / Subtasks
 
-- [x] Task 1: Configure OAuth Providers (AC: #1)
-  - [x] Register application in GitHub Developer Settings (OAuth Apps)
-  - [x] Register application in Google Cloud Console (Credentials > OAuth 2.0 Client IDs)
-  - [x] Add OAuth credentials to environment variables (`.env`)
-  - [x] Configure GitHub provider in auth config (`lib/auth/oauth.ts`)
-  - [x] Configure Google provider in auth config (`lib/auth/oauth.ts`)
-  - [x] OAuth callback routes at `/api/auth/oauth/[provider]/callback`
-  - [x] Configure required OAuth scopes: `user:email` for GitHub, `email profile` for Google
+- [ ] Task 1: Configure OAuth Providers in Better Auth (AC: #1)
+  - [ ] Register application in GitHub Developer Settings (OAuth Apps)
+  - [ ] Register application in Google Cloud Console (Credentials > OAuth 2.0 Client IDs)
+  - [ ] Add OAuth credentials to environment variables (`.env`)
+  - [ ] Configure GitHub provider in Better Auth config
+  - [ ] Configure Google provider in Better Auth config
+  - [ ] Better Auth automatically handles callback routes at `/api/auth/callback/*`
+  - [ ] Configure required OAuth scopes: `user:email` for GitHub, `email profile` for Google
 
-- [x] Task 2: Create OAuth UI Components (AC: #1)
-  - [x] Add "Sign in with GitHub" button to login page (`/(auth)/login/page.tsx`)
-  - [x] Add "Sign in with Google" button to login page
-  - [x] Add "Sign in with GitHub" button to registration page (`/(auth)/register/page.tsx`)
-  - [x] Add "Sign in with Google" button to registration page
-  - [x] Style OAuth buttons per brand guidelines (UX-DR1)
-  - [x] Ensure ARIA labels and accessibility compliance (UX-DR13)
-  - [x] Add visual separator between OAuth and email/password login
+- [ ] Task 2: Create OAuth UI Components (AC: #1)
+  - [ ] Add "Sign in with GitHub" button to login page (`/(auth)/login/page.tsx`)
+  - [ ] Add "Sign in with Google" button to login page
+  - [ ] Add "Sign in with GitHub" button to registration page (`/(auth)/register/page.tsx`)
+  - [ ] Add "Sign in with Google" button to registration page
+  - [ ] Style OAuth buttons per brand guidelines (UX-DR1)
+  - [ ] Ensure ARIA labels and accessibility compliance (UX-DR13)
+  - [ ] Add visual separator between OAuth and email/password login
 
-- [x] Task 3: OAuth Flow (AC: #1, #2)
-  - [x] Custom authorization code exchange implementation
-  - [x] User account creation/linking via Drizzle adapter
-  - [x] Session creation after successful OAuth authentication
-  - [x] Automatic account linking for existing email/password users
-  - [x] OAuth error handling with redirect to error page
+- [ ] Task 3: Verify Better Auth OAuth Flow (AC: #1, #2)
+  - [ ] Better Auth automatically handles authorization code exchange
+  - [ ] Better Auth automatically creates/links user accounts via Drizzle adapter
+  - [ ] Verify session creation after successful OAuth authentication
+  - [ ] Verify automatic account linking for existing email/password users
+  - [ ] Handle OAuth errors gracefully via Better Auth's error handling
 
-- [x] Task 4: Database Schema for OAuth Accounts (AC: #1)
-  - [x] OAuth account links stored in `oauth_accounts` table
-  - [x] Schema includes: `userId`, `provider`, `providerAccountId`, `access_token`, `refresh_token`, `expires_at`
-  - [x] Created `oauth_accounts` table - Better Auth not used (custom auth pattern)
-  - [x] Migration ready via `npm run db:generate`
+- [ ] Task 4: Database Schema for OAuth Accounts (AC: #1)
+  - [ ] Better Auth stores OAuth account links in the `account` table (via adapter)
+  - [ ] Verify schema includes: `userId`, `accountId`, `provider`, `providerAccountId`, `access_token`, `refresh_token`, `expires_at`
+  - [ ] No custom `oauth_accounts` table needed - Better Auth manages this
+  - [ ] Create migration with `npm run db:generate` and apply with `npm run db:migrate`
 
-- [x] Task 5: Security & Error Handling
-  - [x] OAuth state parameter validation (prevents CSRF)
-  - [x] Token encryption at rest with SHA-256
-  - [x] Rate limiting on OAuth callback endpoints
-  - [x] Log OAuth authentication events for security monitoring
-  - [x] Handle OAuth provider errors gracefully with user-friendly error page
-  - [x] Account linking verified via email match
+- [ ] Task 5: Security & Error Handling
+  - [ ] OAuth state parameter validation handled by Better Auth (prevents CSRF)
+  - [ ] Token encryption at rest with bcrypt or AES-256 (NFR8) - Better Auth adapter handles storage
+  - [ ] Implement rate limiting on OAuth endpoints
+  - [ ] Log OAuth authentication events for security monitoring
+  - [ ] Handle OAuth provider downtime gracefully
+  - [ ] Verify Better Auth's built-in account linking security (email verification)
 
-- [x] Task 6: Testing & Quality Assurance
-  - [x] Write integration tests for OAuth flow (mock OAuth providers)
-  - [x] Test new user creation via OAuth
-  - [x] Test automatic account linking (email match)
-  - [x] Test error handling: token exchange failures, profile fetch failures, CSRF detection
-  - [x] ARIA labels on OAuth buttons
-  - [x] Test edge cases: GitHub email API fallback, state validation
-  - [x] CSRF protection via state parameter validation
+- [ ] Task 6: Testing & Quality Assurance
+  - [ ] Write integration tests for OAuth flow (mock OAuth providers)
+  - [ ] Test new user creation via OAuth
+  - [ ] Test automatic account linking (email match, different providers)
+  - [ ] Test error handling: invalid tokens, expired tokens, network failures
+  - [ ] Perform accessibility audit on OAuth buttons
+  - [ ] Test edge cases: special characters in names, very long emails, duplicate accounts
+  - [ ] Security testing: CSRF, account takeover attempts
 
 ## Dev Notes
 
@@ -172,68 +172,10 @@ web/src/lib/
 
 ### Agent Model Used
 
-opencode-go/deepseek-v4-flash
+{{agent_model_name_version}}
 
 ### Debug Log References
 
-- Initial implementation: 2026-05-08
-- Full test suite: 139/139 tests passing, 13/13 test files
-- TypeScript typecheck: clean (no errors)
-
-### Completion Notes
-
-- Implemented OAuth login for GitHub and Google providers
-- Created `oauth_accounts` database table with unique constraint on provider + provider_account_id
-- Created OAuth utility library (`lib/auth/oauth.ts`) with:
-  - Provider configuration (GitHub & Google)
-  - CSRF state parameter generation and validation
-  - Authorization code exchange with token encryption
-  - Profile fetching with email fallback (GitHub primary email API)
-- Created OAuth API routes:
-  - `GET /api/auth/oauth/[provider]` - initiates OAuth flow, sets state cookie, redirects to provider
-  - `GET /api/auth/oauth/[provider]/callback` - handles callback, exchanges code, creates/links user, creates session
-- Updated login and register pages with OAuth buttons (GitHub + Google)
-- Created reusable `OAuthButtons` component with brand icons and loading states
-- Updated auth error page with OAuth-specific error messages
-- Added environment variable configuration for OAuth credentials
-- Account linking: existing email/password users get linked when OAuth email matches
-- New user creation via OAuth when email doesn't exist
-- Rate limiting on OAuth callback endpoints
-- Token encryption at rest using SHA-256 HMAC
-- Session management reused from existing auth system
+### Completion Notes List
 
 ### File List
-
-```
-New files:
-- web/src/lib/db/schema/oauth-accounts.ts          # OAuth accounts table schema
-- web/src/lib/db/schema/oauth-accounts.test.ts     # Schema tests (10 tests)
-- web/src/lib/auth/oauth.ts                         # OAuth utility functions
-- web/src/lib/auth/oauth.test.ts                    # OAuth utility tests (20 tests)
-- web/src/components/auth/oauth-buttons.tsx          # OAuth button components
-- web/src/app/api/auth/oauth/[provider]/route.ts     # OAuth initiation route
-- web/src/app/api/auth/oauth/[provider]/callback/route.ts  # OAuth callback route
-- web/src/app/api/auth/oauth/oauth.test.ts           # OAuth route tests (5 tests)
-
-Modified files:
-- web/.env                                            # Added OAuth env vars
-- web/src/lib/db/schema.ts                            # Added oauthAccounts export
-- web/src/app/(auth)/login/page.tsx                   # Added OAuth buttons
-- web/src/app/(auth)/register/page.tsx                 # Added OAuth buttons
-- web/src/app/auth/error/page.tsx                      # Added OAuth error messages
-- web/src/lib/auth.test.ts                            # Updated db mocks for chain API
-```
-
-## Change Log
-
-| Date | Change |
-|------|--------|
-| 2026-05-08 | Implemented OAuth login for GitHub and Google providers |
-| 2026-05-08 | Created oauth_accounts database schema and barrel export |
-| 2026-05-08 | Created OAuth utility library with state validation, token exchange, profile fetch |
-| 2026-05-08 | Created OAuth API routes (init + callback) with CSRF protection |
-| 2026-05-08 | Added OAuth buttons to login and register pages |
-| 2026-05-08 | Updated auth error page with OAuth-specific error messages |
-| 2026-05-08 | Added OAuth configuration to .env |
-| 2026-05-08 | Updated auth.test.ts mocks for chained db.select().from() API |
-| 2026-05-08 | All 139 tests passing, TypeScript typecheck clean |
