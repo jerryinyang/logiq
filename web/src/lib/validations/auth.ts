@@ -3,6 +3,7 @@ import { z } from 'zod'
 export const emailSchema = z
   .string()
   .min(1, 'Email is required')
+  .max(255, 'Email must not exceed 255 characters')
   .email('Please enter a valid email address')
 
 export const passwordSchema = z

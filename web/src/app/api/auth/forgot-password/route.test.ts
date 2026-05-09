@@ -185,7 +185,7 @@ describe("POST /api/auth/forgot-password", () => {
     await POST(request)
 
     expect(db.transaction).not.toHaveBeenCalled()
-    expect(emailModule.sendPasswordResetEmail).not.toHaveBeenCalled()
+    expect(emailModule.buildPasswordResetUrl).not.toHaveBeenCalled()
   })
 
   it("should return generic message when per-email rate limited", async () => {
@@ -257,7 +257,7 @@ describe("POST /api/auth/forgot-password", () => {
     )
   })
 
-  it("should return generic message for malformed JSON body", async () => {
+  it("should return generic message for malformed JSON body (prevent enumeration)", async () => {
     const request = new Request(
       "http://localhost:3000/api/auth/forgot-password",
       {
@@ -270,8 +270,10 @@ describe("POST /api/auth/forgot-password", () => {
     const response = await POST(request)
     const data = await response.json()
 
-    expect(response.status).toBe(400)
-    expect(data.message).toBe("Invalid request body")
+    expect(response.status).toBe(200)
+    expect(data.message).toContain(
+      "If an account exists with this email, you'll receive a reset link",
+    )
   })
 
   it("should normalize email to lowercase before lookup", async () => {

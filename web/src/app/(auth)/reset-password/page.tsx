@@ -144,7 +144,7 @@ function ResetPasswordForm() {
               autoComplete="new-password"
               placeholder="Confirm new password"
               error={errors.confirmPassword?.message}
-              register={register}
+              register={register("confirmPassword")}
               disabled={isLoading}
             />
 

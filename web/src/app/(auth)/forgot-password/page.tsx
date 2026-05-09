@@ -105,7 +105,7 @@ export default function ForgotPasswordPage() {
               autoComplete="email"
               placeholder="name@example.com"
               error={errors.email?.message}
-              register={register}
+              {...register("email")}
               disabled={isLoading}
             />
             <SubmitButton isLoading={isLoading} loadingText="Sending link...">

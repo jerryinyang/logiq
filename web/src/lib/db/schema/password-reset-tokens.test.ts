@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest"
-import { passwordResetTokens } from "./schema/password-reset-tokens"
+import { passwordResetTokens } from "./password-reset-tokens"
 
 describe("password_reset_tokens schema", () => {
   it("should export the passwordResetTokens table", () => {

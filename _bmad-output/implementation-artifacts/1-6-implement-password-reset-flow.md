@@ -272,3 +272,32 @@ Modified files:
 - [x] [Review][Patch] **[LOW] Rate limiter keyed by email only — no per-IP limit** — `forgot-password:${email}` allows unlimited requests across different emails. [web/src/app/api/auth/forgot-password/route.ts:43] — **FIXED:** Added per-IP rate limit using `checkRateLimit()` alongside per-email `checkForgotPasswordRateLimit()`.
 - [x] [Review][Defer] **[LOW] In-memory rate limiter doesn't share across instances** — Pre-existing issue in `rate-limit.ts`, not introduced by this story. [web/src/lib/rate-limit.ts] — deferred, pre-existing
 - [x] [Review][Defer] **[LOW] No background cleanup for expired reset tokens** — Tokens only deleted on use. Without cleanup job, table grows indefinitely. [password_reset_tokens table] — deferred, needs infra
+
+**Review (2026-05-09) — Round 2 Findings:**
+
+- [x] [Review][Patch] **[CRITICAL] Dev mode never sends emails** — `sendPasswordResetEmail` at `web/src/lib/email/index.ts:36-42` returned early after `console.log` when `NODE_ENV !== "production"`. **FIXED:** Removed dev-mode shortcut — emails are now always sent via the configured provider regardless of NODE_ENV.
+- [x] [Review][Patch] **[HIGH] `confirmPassword` field not registered with react-hook-form** — `web/src/app/(auth)/reset-password/page.tsx:147` passed raw `register` function instead of `register("confirmPassword")`. **FIXED:** Changed to `register={register("confirmPassword")}`.
+- [x] [Review][Patch] **[HIGH] Hardcoded session secret fallback** — `web/src/lib/auth.ts:11` used `"dev-secret-change-in-production"` fallback. **FIXED:** Added `getSessionSecret()` that throws in production when `SESSION_SECRET` unset, falls back to dev secret only in non-production.
+- [x] [Review][Patch] **[HIGH] TOCTOU race on reset token (fix incomplete)** — READ COMMITTED isolation allows concurrent duplicate token use. **FIXED:** Added UNIQUE constraint on `token_hash` in `password-reset-tokens.ts` to prevent duplicate redemptions.
+- [x] [Review][Patch] **[MED] Rate limits not consumed on validation failures** — Rate checks ran after body parsing. **FIXED:** Moved per-IP rate limit check before JSON body parsing.
+- [x] [Review][Patch] **[MED] Email send failure creates dangling token** — Token created before email send. **FIXED:** Email is now sent before token creation. If email fails, no token is stored.
+- [x] [Review][Patch] **[MED] Response status code leaks token validity** — 400 vs 422 responses. **FIXED:** All validation failures now return 400.
+- [x] [Review][Patch] **[MED] Password reset email URL leaks token via Referer** — `web/src/lib/email/index.ts:23` link had no rel attribute. **FIXED:** Added `rel="noreferrer noopener"`.
+- [x] [Review][Patch] **[MED] `sendViaSmtp` no auth validation when SMTP_USER/PASS unset** — **FIXED:** Now validates credentials and skips auth when both are unset. Also validates SMTP_PORT.
+- [x] [Review][Patch] **[MED] No UNIQUE constraint on `token_hash`** — `web/src/lib/db/schema/password-reset-tokens.ts`. **FIXED:** Added `.unique()` to `token_hash` column.
+- [x] [Review][Patch] **[MED] `{/* email */}` placeholder** — Already removed in working tree (generic message shown). **FIXED:** Not applicable.
+- [x] [Review][Patch] **[MED] `getNodemailer` dead code with `new Function()` eval** — `web/src/lib/email/index.ts:110-116`. **FIXED:** Removed dead code.
+- [x] [Review][Patch] **[MED] `bcrypt.hash` and `hashResetToken` outside try block** — **FIXED:** Moved `bcrypt.hash` inside try block.
+- [x] [Review][Patch] **[MED] Transaction rollback prevents expired-token cleanup** — **FIXED:** Expired tokens now deleted outside the transaction after the catch.
+- [x] [Review][Patch] **[LOW] `sendViaResend` fetch has no timeout** — **FIXED:** Added AbortSignal with 10s timeout.
+- [x] [Review][Patch] **[LOW] `SMTP_PORT` non-numeric value produces `NaN`** — **FIXED:** Port validated as 1-65535 before use.
+- [x] [Review][Patch] **[LOW] Dead import `createHash` in reset-password route** — **FIXED:** Removed unused import.
+- [x] [Review][Patch] **[LOW] No `max()` on Zod email schema** — **FIXED:** Added `.max(255)` to emailSchema.
+- [x] [Review][Patch] **[LOW] `buildPasswordResetUrl` trailing slash not normalized** — **FIXED:** APP_URL is now normalized via `getAppUrl()` function.
+- [ ] [Review][Patch] **[LOW] Reset-password page: non-JSON API response reported as "Network error"** — Not yet fixed.
+- [ ] [Review][Patch] **[MED] No server-side token validation on page load** — Not yet fixed (requires GET endpoint or client-side API call).
+- [ ] [Review][Patch] **[MED] Missing security event audit log** — Not yet fixed (Task 7).
+- [ ] [Review][Patch] **[LOW] Forgot-password page email field uses raw register** — `web/src/app/(auth)/forgot-password/page.tsx:108` uses `register={register}` instead of `{...register("email")}`. **FIXED:** Changed to `{...register("email")}`.
+- [x] [Review][Defer] **[LOW] In-memory rate limiter doesn't share across instances** — Pre-existing issue in `rate-limit.ts`, not introduced by this story. [web/src/lib/rate-limit.ts] — deferred, pre-existing
+- [x] [Review][Defer] **[LOW] No background cleanup for expired reset tokens** — Tokens only deleted on use. Without cleanup job, table grows indefinitely. [password_reset_tokens table] — deferred, needs infra
+- [x] [Review][Defer] **[LOW] Open redirect via `//evil.com` bypasses `startsWith('/')`** — Pre-existing in login page, not introduced by story 1.6. [web/src/app/(auth)/login/page.tsx:90] — deferred, pre-existing

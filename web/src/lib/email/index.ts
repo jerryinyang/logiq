@@ -1,9 +1,11 @@
 const APP_NAME = "LOGIQ";
-const APP_URL =
-  process.env.APP_URL || process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
+
+function getAppUrl(): string {
+  return (process.env.APP_URL || process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000").replace(/\/+$/, "");
+}
 
 export function buildPasswordResetUrl(token: string): string {
-  return `${APP_URL}/reset-password?token=${encodeURIComponent(token)}`;
+  return `${getAppUrl()}/reset-password?token=${encodeURIComponent(token)}`;
 }
 
 export async function sendPasswordResetEmail(
@@ -19,7 +21,7 @@ export async function sendPasswordResetEmail(
   <h2 style="color: #2563eb;">${APP_NAME} Password Reset</h2>
   <p>You requested a password reset for your ${APP_NAME} account.</p>
   <p>
-    <a href="${resetUrl}"
+    <a href="${resetUrl}" rel="noreferrer noopener"
        style="display: inline-block; padding: 12px 24px; background-color: #2563eb; color: #ffffff; text-decoration: none; border-radius: 6px; font-weight: bold;">
       Reset Your Password
     </a>
@@ -32,14 +34,6 @@ export async function sendPasswordResetEmail(
   </p>
 </body>
 </html>`;
-
-  if (process.env.NODE_ENV !== "production") {
-    console.log("──────────────────────────────────────────");
-    console.log(`  [DEV EMAIL] Password reset for: ${email}`);
-    console.log(`  [DEV EMAIL] Link: ${resetUrl}`);
-    console.log("──────────────────────────────────────────");
-    return;
-  }
 
   const provider = process.env.EMAIL_PROVIDER || "smtp";
 
@@ -61,6 +55,9 @@ async function sendViaResend(
   }
   const from = process.env.EMAIL_FROM || "noreply@logiq.dev";
 
+  const controller = new AbortController()
+  const timeout = setTimeout(() => controller.abort(), 10000)
+
   const response = await fetch("https://api.resend.com/emails", {
     method: "POST",
     headers: {
@@ -68,7 +65,10 @@ async function sendViaResend(
       "Content-Type": "application/json",
     },
     body: JSON.stringify({ from, to, subject, html }),
-  });
+    signal: controller.signal,
+  })
+
+  clearTimeout(timeout)
 
   if (!response.ok) {
     const body = await response.text();
@@ -90,14 +90,22 @@ async function sendViaSmtp(
     );
   }
 
+  const smtpUser = process.env.SMTP_USER
+  const smtpPass = process.env.SMTP_PASS
+  const smtpPort = parseInt(process.env.SMTP_PORT || "587", 10)
+
+  if (smtpPort < 1 || smtpPort > 65535 || isNaN(smtpPort)) {
+    throw new Error(`Invalid SMTP_PORT: "${process.env.SMTP_PORT}". Must be 1-65535.`)
+  }
+
   const transporter = nodemailer.default.createTransport({
     host: process.env.SMTP_HOST || "localhost",
-    port: parseInt(process.env.SMTP_PORT || "587", 10),
+    port: smtpPort,
     secure: process.env.SMTP_SECURE === "true",
-    auth: {
-      user: process.env.SMTP_USER,
-      pass: process.env.SMTP_PASS,
-    },
+    auth: smtpUser && smtpPass ? {
+      user: smtpUser,
+      pass: smtpPass,
+    } : undefined,
   });
 
   await transporter.sendMail({
@@ -107,10 +115,4 @@ async function sendViaSmtp(
     html,
   });
 }
-async function getNodemailer() {
-  try {
-    return await new Function("return import('nodemailer')")();
-  } catch {
-    return null;
-  }
-}
+

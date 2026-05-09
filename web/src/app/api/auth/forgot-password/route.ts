@@ -15,16 +15,16 @@ const GENERIC_SUCCESS = {
 }
 
 export async function POST(request: Request) {
-  const ip =
-    request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ||
-    request.headers.get("x-real-ip") ||
-    "unknown"
+  const perIpResult = checkRateLimit(`forgot-password-ip:${request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || request.headers.get("x-real-ip") || "unknown"}`)
+  if (!perIpResult.allowed) {
+    return NextResponse.json(GENERIC_SUCCESS, { status: 200 })
+  }
 
   let body: unknown
   try {
     body = await request.json()
   } catch {
-    return NextResponse.json({ message: "Invalid request body" }, { status: 400 })
+    return NextResponse.json(GENERIC_SUCCESS, { status: 200 })
   }
 
   const parsed = forgotPasswordSchema.safeParse(body)
@@ -34,11 +34,6 @@ export async function POST(request: Request) {
 
   const { email } = parsed.data
   const normalizedEmail = email.toLowerCase().trim()
-
-  const perIpResult = checkRateLimit(`forgot-password-ip:${ip}`)
-  if (!perIpResult.allowed) {
-    return NextResponse.json(GENERIC_SUCCESS, { status: 200 })
-  }
 
   const perEmailResult = checkForgotPasswordRateLimit(`forgot-password:${normalizedEmail}`)
   if (!perEmailResult.allowed) {
@@ -53,6 +48,15 @@ export async function POST(request: Request) {
 
     if (user) {
       const token = randomBytes(32).toString("hex")
+      const resetUrl = buildPasswordResetUrl(token)
+
+      try {
+        await sendPasswordResetEmail(normalizedEmail, resetUrl)
+      } catch (error) {
+        console.error("Failed to send password reset email:", error)
+        return NextResponse.json(GENERIC_SUCCESS, { status: 200 })
+      }
+
       const tokenHash = hashResetToken(token)
       const expiresAt = new Date(Date.now() + TOKEN_TTL_HOURS * 60 * 60 * 1000)
 
@@ -66,14 +70,6 @@ export async function POST(request: Request) {
           expires_at: expiresAt,
         })
       })
-
-      const resetUrl = buildPasswordResetUrl(token)
-
-      try {
-        await sendPasswordResetEmail(normalizedEmail, resetUrl)
-      } catch (error) {
-        console.error("Failed to send password reset email:", error)
-      }
     }
   } catch (error) {
     console.error("Forgot password error:", error)

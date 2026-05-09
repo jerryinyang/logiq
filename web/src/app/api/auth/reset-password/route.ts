@@ -2,7 +2,6 @@ import { NextResponse } from "next/server"
 import { db } from "@/lib/db"
 import { users, passwordResetTokens } from "@/lib/db/schema"
 import { eq } from "drizzle-orm"
-import { createHash } from "crypto"
 import bcrypt from "bcryptjs"
 import { resetPasswordSchema } from "@/lib/validations/auth"
 import { revokeUserSessions } from "@/lib/auth"
@@ -22,7 +21,7 @@ export async function POST(request: Request) {
     ? (body as Record<string, unknown>).token as string
     : null
 
-  if (!token || typeof token !== "string" || token.length < 1) {
+  if (!token || token.length < 1) {
     return NextResponse.json(
       { message: "Invalid or expired reset link" },
       { status: 400 },
@@ -31,20 +30,20 @@ export async function POST(request: Request) {
 
   const parsed = resetPasswordSchema.safeParse(body)
   if (!parsed.success) {
-    const errors = parsed.error.errors.map((e) => ({
-      field: e.path.join("."),
-      message: e.message,
-    }))
-    return NextResponse.json({ message: "Validation failed", errors }, { status: 422 })
+    return NextResponse.json(
+      { message: "Invalid or expired reset link" },
+      { status: 400 },
+    )
   }
 
   const tokenHash = hashResetToken(token)
   const { password } = parsed.data
-  const passwordHash = await bcrypt.hash(password, BCRYPT_COST)
 
   let userId: string | null = null
 
   try {
+    const passwordHash = await bcrypt.hash(password, BCRYPT_COST)
+
     await db.transaction(async (tx) => {
       const [resetRecord] = await tx
         .select({
@@ -61,9 +60,6 @@ export async function POST(request: Request) {
       }
 
       if (new Date() > resetRecord.expires_at) {
-        await tx
-          .delete(passwordResetTokens)
-          .where(eq(passwordResetTokens.id, resetRecord.id))
         throw new Error("EXPIRED_TOKEN")
       }
 
@@ -89,6 +85,7 @@ export async function POST(request: Request) {
       )
     }
     if (error instanceof Error && error.message === "EXPIRED_TOKEN") {
+      await db.delete(passwordResetTokens).where(eq(passwordResetTokens.token_hash, tokenHash))
       return NextResponse.json(
         { message: "Invalid or expired reset link" },
         { status: 400 },

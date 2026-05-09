@@ -8,10 +8,18 @@ const SESSION_COOKIE = "logiq_session"
 const CSRF_COOKIE = "logiq_csrf"
 const SESSION_DURATION_DAYS = 30
 const MAX_SESSIONS_PER_USER = 5
-const SESSION_SECRET = process.env.SESSION_SECRET || "dev-secret-change-in-production"
+const SESSION_SECRET = process.env.SESSION_SECRET
+
+function getSessionSecret(): string {
+  if (SESSION_SECRET) return SESSION_SECRET
+  if (process.env.NODE_ENV === "production") {
+    throw new Error("SESSION_SECRET environment variable is required in production")
+  }
+  return "dev-secret-change-in-production"
+}
 
 function hashToken(token: string): string {
-  return createHmac("sha256", SESSION_SECRET).update(token).digest("hex")
+  return createHmac("sha256", getSessionSecret()).update(token).digest("hex")
 }
 
 export async function createSession(userId: string, days: number = SESSION_DURATION_DAYS): Promise<string> {
