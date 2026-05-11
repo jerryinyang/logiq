@@ -1,3 +1,6 @@
+import { writeFileSync, mkdirSync, existsSync } from "fs";
+import { join } from "path";
+
 const APP_NAME = "LOGIQ";
 
 function getAppUrl(): string {
@@ -35,12 +38,14 @@ export async function sendPasswordResetEmail(
 </body>
 </html>`;
 
-  const provider = process.env.EMAIL_PROVIDER || "smtp";
+  const provider = process.env.EMAIL_PROVIDER || "dev";
 
   if (provider === "resend") {
     await sendViaResend(email, subject, html);
-  } else {
+  } else if (provider === "smtp") {
     await sendViaSmtp(email, subject, html);
+  } else {
+    await sendViaDev(email, subject, html, resetUrl);
   }
 }
 
@@ -76,19 +81,42 @@ async function sendViaResend(
   }
 }
 
+async function sendViaDev(
+  to: string,
+  subject: string,
+  html: string,
+  resetUrl?: string,
+): Promise<void> {
+  const timestamp = new Date().toISOString();
+  const logEntry = `
+========================================
+DEV EMAIL @ ${timestamp}
+To: ${to}
+Subject: ${subject}
+${resetUrl ? `Reset URL: ${resetUrl}` : ""}
+----------------------------------------
+${html}
+========================================
+`;
+
+  console.log(`[DEV EMAIL] Password reset email to ${to}`);
+  console.log(`[DEV EMAIL] Reset URL: ${resetUrl || "N/A"}`);
+
+  // Write to a local file for easy inspection
+  const logDir = join(process.cwd(), "tmp");
+  if (!existsSync(logDir)) {
+    mkdirSync(logDir, { recursive: true });
+  }
+  const logFile = join(logDir, "dev-emails.log");
+  writeFileSync(logFile, logEntry, { flag: "a" });
+}
+
 async function sendViaSmtp(
   to: string,
   subject: string,
   html: string,
 ): Promise<void> {
-  let nodemailer: typeof import("nodemailer");
-  try {
-    nodemailer = await import("nodemailer");
-  } catch {
-    throw new Error(
-      "nodemailer is not installed. Install with: pnpm add nodemailer, or set EMAIL_PROVIDER=resend and RESEND_API_KEY.",
-    );
-  }
+  const nodemailer = await import("nodemailer");
 
   const smtpUser = process.env.SMTP_USER
   const smtpPass = process.env.SMTP_PASS
@@ -98,7 +126,7 @@ async function sendViaSmtp(
     throw new Error(`Invalid SMTP_PORT: "${process.env.SMTP_PORT}". Must be 1-65535.`)
   }
 
-  const transporter = nodemailer.default.createTransport({
+  const transporter = nodemailer.createTransport({
     host: process.env.SMTP_HOST || "localhost",
     port: smtpPort,
     secure: process.env.SMTP_SECURE === "true",
