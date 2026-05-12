@@ -35,7 +35,7 @@
 # - Dev moves story to 'review', then runs code-review (fresh context, different LLM recommended)
 
 generated: 2026-04-14
-last_updated: 2026-04-14
+last_updated: 2026-05-12
 project: logiq
 project_key: NOKEY
 tracking_system: file-system
@@ -58,14 +58,14 @@ development_status:
   # ==============================
   # Epic 2: Logic Block Canvas & Challenge Core (MVP)
   # ==============================
-  epic-2: backlog
-  2-1-install-and-configure-react-flow-canvas: backlog
-  2-2-implement-block-palette-drag-to-canvas-interaction: backlog
-  2-3-implement-block-connection-real-time-validation: backlog
-  2-4-build-logic-block-execution-engine-test-runner: backlog
-  2-5-implement-step-through-execution-visualization: backlog
-  2-6-implement-iteration-canvas-state-persistence: backlog
-  2-7-implement-edge-case-handling-blocks: backlog
+  epic-2: in-progress
+  2-1-install-and-configure-react-flow-canvas: ready-for-dev
+  2-2-implement-block-palette-drag-to-canvas-interaction: ready-for-dev
+  2-3-implement-block-connection-real-time-validation: ready-for-dev
+  2-4-build-logic-block-execution-engine-test-runner: ready-for-dev
+  2-5-implement-step-through-execution-visualization: ready-for-dev
+  2-6-implement-iteration-canvas-state-persistence: ready-for-dev
+  2-7-implement-edge-case-handling-blocks: ready-for-dev
   epic-2-retrospective: optional
 
   # ==============================
