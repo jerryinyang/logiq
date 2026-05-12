@@ -24,6 +24,7 @@ function ResetPasswordForm() {
   const [isLoading, setIsLoading] = useState(false)
   const [serverError, setServerError] = useState("")
   const [passwordValue, setPasswordValue] = useState("")
+  const [tokenValid, setTokenValid] = useState<boolean | null>(null)
 
   const {
     register,
@@ -34,7 +35,45 @@ function ResetPasswordForm() {
     mode: "onBlur",
   })
 
-  if (!token || token.length < 1) {
+  useEffect(() => {
+    if (!token) {
+      setTokenValid(false)
+      return
+    }
+
+    const validateToken = async () => {
+      try {
+        const response = await fetch(
+          `/api/auth/reset-password?token=${encodeURIComponent(token)}`
+        )
+        if (response.ok) {
+          const data = await response.json()
+          setTokenValid(data.valid === true)
+        } else {
+          setTokenValid(false)
+        }
+      } catch {
+        setTokenValid(false)
+      }
+    }
+
+    validateToken()
+  }, [token])
+
+  if (tokenValid === null && token) {
+    return (
+      <AuthLayout
+        title="Validating..."
+        description="Checking your reset link"
+      >
+        <div className="flex justify-center py-8">
+          <div className="h-6 w-6 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+        </div>
+      </AuthLayout>
+    )
+  }
+
+  if (tokenValid === false || !token || token.length < 1) {
     return (
       <AuthLayout
         title="Invalid reset link"
@@ -80,9 +119,13 @@ function ResetPasswordForm() {
         body: JSON.stringify({ token, password: data.password, confirmPassword: data.confirmPassword }),
       })
 
-      const result = await response.json()
+      const contentType = response.headers.get("content-type")
 
       if (!response.ok) {
+        const result = contentType?.includes("application/json")
+          ? await response.json()
+          : { message: "An unexpected error occurred. Please try again." }
+
         if (result.errors) {
           const fieldErrors = result.errors
             .map((e: { field: string; message: string }) => e.message)
@@ -120,7 +163,7 @@ function ResetPasswordForm() {
               autoComplete="new-password"
               placeholder="Enter new password"
               error={errors.password?.message}
-              register={register("password", {
+              {...register("password", {
                 onChange: (e) => setPasswordValue(e.target.value),
               })}
               disabled={isLoading}
@@ -144,7 +187,7 @@ function ResetPasswordForm() {
               autoComplete="new-password"
               placeholder="Confirm new password"
               error={errors.confirmPassword?.message}
-              register={register("confirmPassword")}
+              {...register("confirmPassword")}
               disabled={isLoading}
             />
 

@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, Suspense } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { useForm } from 'react-hook-form'
@@ -16,7 +16,7 @@ import { Divider } from '@/components/auth/divider'
 import { StaggerContainer, StaggerItem } from '@/components/auth/animated-container'
 import { registerSchema, type RegisterFormData } from '@/lib/validations/auth'
 
-export default function RegisterPage() {
+function RegisterForm() {
   const router = useRouter()
   const [isLoading, setIsLoading] = useState(false)
   const [serverError, setServerError] = useState('')
@@ -162,5 +162,24 @@ export default function RegisterPage() {
         </StaggerItem>
       </StaggerContainer>
     </AuthLayout>
+  )
+}
+
+export default function RegisterPage() {
+  return (
+    <Suspense
+      fallback={
+        <AuthLayout
+          title="Loading..."
+          description="Please wait"
+        >
+          <div className="flex justify-center py-8">
+            <div className="h-6 w-6 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+          </div>
+        </AuthLayout>
+      }
+    >
+      <RegisterForm />
+    </Suspense>
   )
 }

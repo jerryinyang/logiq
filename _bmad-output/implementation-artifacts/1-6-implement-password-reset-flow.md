@@ -1,6 +1,6 @@
 # Story 1.6: Implement Password Reset Flow
 
-Status: in-progress
+Status: review
 
 <!-- Note: Validation is optional. Run validate-create-story for quality check before dev-story. -->
 
@@ -221,6 +221,7 @@ deepseek-v4-pro (via opencode)
 - **Task 3 (Reset Password Page):** `/(auth)/reset-password` page — extracts token from query params, validates on load, password + confirm password fields with strength indicator, inline validation errors, "Request New Link" option, redirects to login with success toast.
 - **Task 8 (Testing):** Added 4 test files: `forgot-password/route.test.ts` (10 tests), `reset-password/route.test.ts` (9 tests), `lib/email/index.test.ts` (3 tests), `lib/db/schema/password-reset-tokens.test.ts`. Updated existing `auth.test.ts` (revokeUserSessions tests), `schema.test.ts` (passwordResetTokens export test).
 - **Login Page:** Fixed "Forgot password?" link href from `/auth/forgot-password` to `/forgot-password`. Added `useEffect` to show success toast on `?reset=success` param after password reset.
+- **Review Fixes (Round 3):** Fixed `next.config.mjs` turbopack.root to resolve tailwindcss from web/ directory (blocked `pnpm dev`). Fixed reset-password page FormInput register patterns (`register={register(...)}` → `{...register(...)}`) which prevented react-hook-form from working. Added content-type check for non-JSON API responses. Created GET endpoint for server-side token validation on page load. Added `web/src/lib/audit.ts` security event logging utility integrated into forgot-password and reset-password routes.
 
 ### File List
 
@@ -230,6 +231,7 @@ New files:
 - `web/src/lib/db/schema/password-reset-barrel.test.ts` — Barrel export verification
 - `web/src/lib/email/index.ts` — Email service with Resend/SMTP support + dev logging
 - `web/src/lib/email/index.test.ts` — Email service unit tests
+- `web/src/lib/audit.ts` — Security event audit logging utility
 - `web/src/app/(auth)/forgot-password/page.tsx` — Forgot password request page
 - `web/src/app/api/auth/forgot-password/route.ts` — Forgot password API handler
 - `web/src/app/api/auth/forgot-password/route.test.ts` — API integration tests
@@ -240,11 +242,16 @@ New files:
 - `web/drizzle/meta/0005_snapshot.json` — Migration snapshot
 
 Modified files:
+- `web/next.config.mjs` — Added turbopack.root to resolve modules from web/ directory
 - `web/src/lib/db/schema.ts` — Added passwordResetTokens export
 - `web/src/lib/db/schema.test.ts` — Added passwordResetTokens export test
 - `web/src/lib/auth.ts` — Added revokeUserSessions() function
 - `web/src/lib/auth.test.ts` — Added revokeUserSessions tests
 - `web/src/app/(auth)/login/page.tsx` — Fixed forgot-password link href + added reset success toast
+- `web/src/app/(auth)/reset-password/page.tsx` — Fixed FormInput register patterns (spread instead of prop), added server-side token validation, fixed non-JSON response handling
+- `web/src/app/(auth)/forgot-password/page.tsx` — Fixed FormInput register pattern (spread)
+- `web/src/app/api/auth/forgot-password/route.ts` — Added security audit logging
+- `web/src/app/api/auth/reset-password/route.ts` — Added GET handler for token validation + security audit logging
 - `web/drizzle/meta/_journal.json` — Added migration 0005 entry
 
 ### Change Log
@@ -256,6 +263,13 @@ Modified files:
 - Session invalidation via revokeUserSessions() after password reset
 - Comprehensive test suite: 22+ tests across 4 new test files + 2 updated test files
 - Migration 0005 for password_reset_tokens table
+- **Round 3 fixes (2026-05-12):**
+  - Fixed `next.config.mjs` turbopack.root to resolve tailwindcss from web/ directory (blocked `pnpm dev`)
+  - Fixed reset-password page FormInput register patterns (`register={register(...)}` → `{...register(...)}`)
+  - Added content-type check in reset-password page to handle non-JSON API responses
+  - Added GET handler for server-side token validation on page load
+  - Created `web/src/lib/audit.ts` security event logging (audit trail)
+  - Fixed `useSearchParams` Suspense boundary issues in login, register, and root pages (blocked `pnpm build`)
 
 ### Review Findings
 
@@ -294,10 +308,10 @@ Modified files:
 - [x] [Review][Patch] **[LOW] Dead import `createHash` in reset-password route** — **FIXED:** Removed unused import.
 - [x] [Review][Patch] **[LOW] No `max()` on Zod email schema** — **FIXED:** Added `.max(255)` to emailSchema.
 - [x] [Review][Patch] **[LOW] `buildPasswordResetUrl` trailing slash not normalized** — **FIXED:** APP_URL is now normalized via `getAppUrl()` function.
-- [ ] [Review][Patch] **[LOW] Reset-password page: non-JSON API response reported as "Network error"** — Not yet fixed.
-- [ ] [Review][Patch] **[MED] No server-side token validation on page load** — Not yet fixed (requires GET endpoint or client-side API call).
-- [ ] [Review][Patch] **[MED] Missing security event audit log** — Not yet fixed (Task 7).
-- [ ] [Review][Patch] **[LOW] Forgot-password page email field uses raw register** — `web/src/app/(auth)/forgot-password/page.tsx:108` uses `register={register}` instead of `{...register("email")}`. **FIXED:** Changed to `{...register("email")}`.
+- [x] [Review][Patch] **[LOW] Reset-password page: non-JSON API response reported as "Network error"** — **FIXED:** Added content-type check before parsing JSON; non-JSON responses now show "An unexpected error occurred" instead of "Network error".
+- [x] [Review][Patch] **[MED] No server-side token validation on page load** — **FIXED:** Added GET handler to validate token server-side; page calls GET endpoint on load and shows validating/error states.
+- [x] [Review][Patch] **[MED] Missing security event audit log** — **FIXED:** Created `web/src/lib/audit.ts` with `securityLog()` for PASSWORD_RESET_REQUESTED, PASSWORD_RESET_COMPLETED, SESSIONS_REVOKED events.
+- [x] [Review][Patch] **[LOW] Forgot-password page email field uses raw register** — `web/src/app/(auth)/forgot-password/page.tsx:108` uses `register={register}` instead of `{...register("email")}`. **FIXED:** Changed to `{...register("email")}`.
 - [x] [Review][Defer] **[LOW] In-memory rate limiter doesn't share across instances** — Pre-existing issue in `rate-limit.ts`, not introduced by this story. [web/src/lib/rate-limit.ts] — deferred, pre-existing
 - [x] [Review][Defer] **[LOW] No background cleanup for expired reset tokens** — Tokens only deleted on use. Without cleanup job, table grows indefinitely. [password_reset_tokens table] — deferred, needs infra
 - [x] [Review][Defer] **[LOW] Open redirect via `//evil.com` bypasses `startsWith('/')`** — Pre-existing in login page, not introduced by story 1.6. [web/src/app/(auth)/login/page.tsx:90] — deferred, pre-existing

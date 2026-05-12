@@ -4,7 +4,7 @@ import { eq, lt } from "drizzle-orm"
 import { cookies } from "next/headers"
 import { createHmac, randomBytes } from "crypto"
 
-const SESSION_COOKIE = "logiq_session"
+export const SESSION_COOKIE = "logiq_session"
 const CSRF_COOKIE = "logiq_csrf"
 const SESSION_DURATION_DAYS = 30
 const MAX_SESSIONS_PER_USER = 5

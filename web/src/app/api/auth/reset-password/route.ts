@@ -4,8 +4,39 @@ import { users, passwordResetTokens } from "@/lib/db/schema"
 import { eq } from "drizzle-orm"
 import bcrypt from "bcryptjs"
 import { resetPasswordSchema } from "@/lib/validations/auth"
-import { revokeUserSessions } from "@/lib/auth"
+import { revokeUserSessions, SESSION_COOKIE } from "@/lib/auth"
 import { hashResetToken } from "@/lib/auth/tokens"
+import { securityLog } from "@/lib/audit"
+
+export async function GET(request: Request) {
+  const { searchParams } = new URL(request.url)
+  const token = searchParams.get("token")
+
+  if (!token || token.length < 1) {
+    return NextResponse.json({ valid: false }, { status: 400 })
+  }
+
+  const tokenHash = hashResetToken(token)
+
+  const [record] = await db
+    .select({
+      id: passwordResetTokens.id,
+      expires_at: passwordResetTokens.expires_at,
+    })
+    .from(passwordResetTokens)
+    .where(eq(passwordResetTokens.token_hash, tokenHash))
+    .limit(1)
+
+  if (!record) {
+    return NextResponse.json({ valid: false }, { status: 200 })
+  }
+
+  if (new Date() > record.expires_at) {
+    return NextResponse.json({ valid: false }, { status: 200 })
+  }
+
+  return NextResponse.json({ valid: true }, { status: 200 })
+}
 
 const BCRYPT_COST = 12
 
@@ -96,12 +127,31 @@ export async function POST(request: Request) {
 
   try {
     await revokeUserSessions(userId!)
+    securityLog({
+      type: "SESSIONS_REVOKED",
+      userId: userId!,
+    })
   } catch (error) {
     console.error("Failed to revoke sessions after password reset:", error)
   }
 
-  return NextResponse.json(
+  securityLog({
+    type: "PASSWORD_RESET_COMPLETED",
+    userId: userId!,
+  })
+
+  const response = NextResponse.json(
     { message: "Password reset successfully. Please log in with your new password." },
     { status: 200 },
   )
+
+  response.cookies.set(SESSION_COOKIE, "", {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production" || process.env.FORCE_SECURE_COOKIE === "true",
+    sameSite: "lax",
+    path: "/",
+    maxAge: 0,
+  })
+
+  return response
 }

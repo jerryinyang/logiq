@@ -7,6 +7,7 @@ import { forgotPasswordSchema } from "@/lib/validations/auth"
 import { checkForgotPasswordRateLimit, checkRateLimit } from "@/lib/rate-limit"
 import { sendPasswordResetEmail, buildPasswordResetUrl } from "@/lib/email"
 import { hashResetToken } from "@/lib/auth/tokens"
+import { securityLog } from "@/lib/audit"
 
 const TOKEN_TTL_HOURS = 1
 
@@ -68,6 +69,12 @@ export async function POST(request: Request) {
       })
 
       const resetUrl = buildPasswordResetUrl(token)
+
+      securityLog({
+        type: "PASSWORD_RESET_REQUESTED",
+        userId: user.id,
+        ip,
+      })
 
       try {
         await sendPasswordResetEmail(normalizedEmail, resetUrl)

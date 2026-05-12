@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useCallback, useEffect, useRef } from 'react'
+import { useState, useCallback, useEffect, useRef, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { useForm } from 'react-hook-form'
@@ -15,7 +15,7 @@ import { Divider } from '@/components/auth/divider'
 import { StaggerContainer, StaggerItem } from '@/components/auth/animated-container'
 import { signInSchema, type SignInFormData } from '@/lib/validations/auth'
 
-export default function LoginPage() {
+function LoginForm() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const [isLoading, setIsLoading] = useState(false)
@@ -169,5 +169,24 @@ export default function LoginPage() {
         </StaggerItem>
       </StaggerContainer>
     </AuthLayout>
+  )
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense
+      fallback={
+        <AuthLayout
+          title="Loading..."
+          description="Please wait"
+        >
+          <div className="flex justify-center py-8">
+            <div className="h-6 w-6 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+          </div>
+        </AuthLayout>
+      }
+    >
+      <LoginForm />
+    </Suspense>
   )
 }

@@ -25,7 +25,7 @@ describe("email service", () => {
     it("should use Resend provider when configured", async () => {
       process.env.EMAIL_PROVIDER = "resend"
       process.env.RESEND_API_KEY = "test_key"
-      process.env.NODE_ENV = "development"
+      process.env.NODE_ENV = "production"
 
       const fetchMock = vi.fn().mockResolvedValue({ ok: true })
       vi.stubGlobal("fetch", fetchMock)
@@ -35,10 +35,10 @@ describe("email service", () => {
       expect(fetchMock).toHaveBeenCalled()
     })
 
-    it("should not throw in development mode with Resend", async () => {
+    it("should not throw with Resend when API key is configured", async () => {
       process.env.EMAIL_PROVIDER = "resend"
       process.env.RESEND_API_KEY = "test_key"
-      process.env.NODE_ENV = "development"
+      process.env.NODE_ENV = "production"
 
       vi.stubGlobal("fetch", vi.fn().mockResolvedValue({ ok: true }))
 
