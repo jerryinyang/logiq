@@ -1,5 +1,6 @@
 import { writeFileSync, mkdirSync, existsSync } from "fs";
 import { join } from "path";
+import nodemailer from "nodemailer";
 
 const APP_NAME = "LOGIQ";
 
@@ -55,9 +56,7 @@ export async function sendPasswordResetEmail(
   if (provider === "resend") {
     await sendViaResend(email, subject, html);
   } else if (provider === "smtp") {
-    throw new Error(
-      "SMTP email provider requires the nodemailer package. Install it with: pnpm add nodemailer, then set EMAIL_PROVIDER=smtp.",
-    );
+    await sendViaSmtp(email, subject, html);
   } else {
     await sendViaDev(email, subject, html, resetUrl);
   }
@@ -91,7 +90,11 @@ async function sendViaResend(
 
   if (!response.ok) {
     const body = await response.text();
-    throw new Error(`Resend API error: ${response.status} ${body}`);
+    let hint = "";
+    if (response.status === 403 && body.includes("domain is not verified")) {
+      hint = " → Verify your domain at https://resend.com/domains, or switch to SMTP by setting EMAIL_PROVIDER=smtp.";
+    }
+    throw new Error(`Resend API error: ${response.status} ${body}${hint}`);
   }
 }
 
@@ -123,4 +126,35 @@ ${html}
   } catch {
     // File logging is best-effort; don't fail the request
   }
+}
+
+async function sendViaSmtp(
+  to: string,
+  subject: string,
+  html: string,
+): Promise<void> {
+  const smtpUser = process.env.SMTP_USER || process.env.EMAIL_USER
+  const smtpPass = process.env.SMTP_PASS || process.env.EMAIL_PASS
+  const smtpPort = parseInt(process.env.SMTP_PORT || "587", 10)
+
+  if (smtpPort < 1 || smtpPort > 65535 || isNaN(smtpPort)) {
+    throw new Error(`Invalid SMTP_PORT: "${process.env.SMTP_PORT}". Must be 1-65535.`)
+  }
+
+  const transporter = nodemailer.createTransport({
+    host: process.env.SMTP_HOST || "localhost",
+    port: smtpPort,
+    secure: process.env.SMTP_SECURE === "true",
+    auth: smtpUser && smtpPass ? {
+      user: smtpUser,
+      pass: smtpPass,
+    } : undefined,
+  });
+
+  await transporter.sendMail({
+    from: process.env.EMAIL_FROM || "noreply@logiq.dev",
+    to,
+    subject,
+    html,
+  });
 }
