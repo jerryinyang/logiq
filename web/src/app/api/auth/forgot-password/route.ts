@@ -15,10 +15,10 @@ const GENERIC_SUCCESS = {
 }
 
 export async function POST(request: Request) {
-  const perIpResult = checkRateLimit(`forgot-password-ip:${request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || request.headers.get("x-real-ip") || "unknown"}`)
-  if (!perIpResult.allowed) {
-    return NextResponse.json(GENERIC_SUCCESS, { status: 200 })
-  }
+  const ip =
+    request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ||
+    request.headers.get("x-real-ip") ||
+    "unknown"
 
   let body: unknown
   try {
@@ -35,6 +35,11 @@ export async function POST(request: Request) {
   const { email } = parsed.data
   const normalizedEmail = email.toLowerCase().trim()
 
+  const perIpResult = checkRateLimit(`forgot-password-ip:${ip}`)
+  if (!perIpResult.allowed) {
+    return NextResponse.json(GENERIC_SUCCESS, { status: 200 })
+  }
+
   const perEmailResult = checkForgotPasswordRateLimit(`forgot-password:${normalizedEmail}`)
   if (!perEmailResult.allowed) {
     return NextResponse.json(GENERIC_SUCCESS, { status: 200 })
@@ -48,15 +53,6 @@ export async function POST(request: Request) {
 
     if (user) {
       const token = randomBytes(32).toString("hex")
-      const resetUrl = buildPasswordResetUrl(token)
-
-      try {
-        await sendPasswordResetEmail(normalizedEmail, resetUrl)
-      } catch (error) {
-        console.error("Failed to send password reset email:", error)
-        return NextResponse.json(GENERIC_SUCCESS, { status: 200 })
-      }
-
       const tokenHash = hashResetToken(token)
       const expiresAt = new Date(Date.now() + TOKEN_TTL_HOURS * 60 * 60 * 1000)
 
@@ -70,6 +66,14 @@ export async function POST(request: Request) {
           expires_at: expiresAt,
         })
       })
+
+      const resetUrl = buildPasswordResetUrl(token)
+
+      try {
+        await sendPasswordResetEmail(normalizedEmail, resetUrl)
+      } catch (error) {
+        console.error("Failed to send password reset email:", error)
+      }
     }
   } catch (error) {
     console.error("Forgot password error:", error)

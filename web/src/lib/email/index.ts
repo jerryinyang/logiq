@@ -38,12 +38,26 @@ export async function sendPasswordResetEmail(
 </body>
 </html>`;
 
-  const provider = process.env.EMAIL_PROVIDER || "dev";
+  // Always log the reset URL to console for easy access during development
+  console.log("========================================");
+  console.log(`[PASSWORD RESET] To: ${email}`);
+  console.log(`[PASSWORD RESET] URL: ${resetUrl}`);
+  console.log("========================================");
+
+  // In development, save to local file and skip external provider
+  if (process.env.NODE_ENV !== "production") {
+    await sendViaDev(email, subject, html, resetUrl);
+    return;
+  }
+
+  const provider = process.env.EMAIL_PROVIDER || "resend";
 
   if (provider === "resend") {
     await sendViaResend(email, subject, html);
   } else if (provider === "smtp") {
-    await sendViaSmtp(email, subject, html);
+    throw new Error(
+      "SMTP email provider requires the nodemailer package. Install it with: pnpm add nodemailer, then set EMAIL_PROVIDER=smtp.",
+    );
   } else {
     await sendViaDev(email, subject, html, resetUrl);
   }
@@ -99,48 +113,14 @@ ${html}
 ========================================
 `;
 
-  console.log(`[DEV EMAIL] Password reset email to ${to}`);
-  console.log(`[DEV EMAIL] Reset URL: ${resetUrl || "N/A"}`);
-
-  // Write to a local file for easy inspection
-  const logDir = join(process.cwd(), "tmp");
-  if (!existsSync(logDir)) {
-    mkdirSync(logDir, { recursive: true });
+  try {
+    const logDir = join(process.cwd(), "tmp");
+    if (!existsSync(logDir)) {
+      mkdirSync(logDir, { recursive: true });
+    }
+    const logFile = join(logDir, "dev-emails.log");
+    writeFileSync(logFile, logEntry, { flag: "a" });
+  } catch {
+    // File logging is best-effort; don't fail the request
   }
-  const logFile = join(logDir, "dev-emails.log");
-  writeFileSync(logFile, logEntry, { flag: "a" });
 }
-
-async function sendViaSmtp(
-  to: string,
-  subject: string,
-  html: string,
-): Promise<void> {
-  const nodemailer = await import("nodemailer");
-
-  const smtpUser = process.env.SMTP_USER
-  const smtpPass = process.env.SMTP_PASS
-  const smtpPort = parseInt(process.env.SMTP_PORT || "587", 10)
-
-  if (smtpPort < 1 || smtpPort > 65535 || isNaN(smtpPort)) {
-    throw new Error(`Invalid SMTP_PORT: "${process.env.SMTP_PORT}". Must be 1-65535.`)
-  }
-
-  const transporter = nodemailer.createTransport({
-    host: process.env.SMTP_HOST || "localhost",
-    port: smtpPort,
-    secure: process.env.SMTP_SECURE === "true",
-    auth: smtpUser && smtpPass ? {
-      user: smtpUser,
-      pass: smtpPass,
-    } : undefined,
-  });
-
-  await transporter.sendMail({
-    from: process.env.EMAIL_FROM || "noreply@logiq.dev",
-    to,
-    subject,
-    html,
-  });
-}
-
