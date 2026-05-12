@@ -73,8 +73,6 @@ export async function POST(request: Request) {
   let userId: string | null = null
 
   try {
-    const passwordHash = await bcrypt.hash(password, BCRYPT_COST)
-
     await db.transaction(async (tx) => {
       const [resetRecord] = await tx
         .select({
@@ -94,6 +92,8 @@ export async function POST(request: Request) {
         throw new Error("EXPIRED_TOKEN")
       }
 
+      const passwordHash = await bcrypt.hash(password, BCRYPT_COST)
+
       await tx
         .update(users)
         .set({
@@ -106,7 +106,14 @@ export async function POST(request: Request) {
         .delete(passwordResetTokens)
         .where(eq(passwordResetTokens.id, resetRecord.id))
 
+      await revokeUserSessions(resetRecord.user_id, tx)
+
       userId = resetRecord.user_id
+    })
+
+    securityLog({
+      type: "SESSIONS_REVOKED",
+      userId: userId!,
     })
   } catch (error) {
     if (error instanceof Error && error.message === "INVALID_TOKEN") {
@@ -123,16 +130,6 @@ export async function POST(request: Request) {
       )
     }
     throw error
-  }
-
-  try {
-    await revokeUserSessions(userId!)
-    securityLog({
-      type: "SESSIONS_REVOKED",
-      userId: userId!,
-    })
-  } catch (error) {
-    console.error("Failed to revoke sessions after password reset:", error)
   }
 
   securityLog({

@@ -45,12 +45,6 @@ export async function sendPasswordResetEmail(
   console.log(`[PASSWORD RESET] URL: ${resetUrl}`);
   console.log("========================================");
 
-  // In development, save to local file and skip external provider
-  if (process.env.NODE_ENV !== "production") {
-    await sendViaDev(email, subject, html, resetUrl);
-    return;
-  }
-
   const provider = process.env.EMAIL_PROVIDER || "resend";
 
   if (provider === "resend") {

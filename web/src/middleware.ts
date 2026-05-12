@@ -2,7 +2,7 @@ import { type NextRequest, NextResponse } from 'next/server'
 
 const SESSION_COOKIE = 'logiq_session'
 
-const authRoutes = new Set(['/', '/login', '/register', '/auth/forgot-password', '/auth/reset-password'])
+const authRoutes = new Set(['/', '/login', '/register', '/forgot-password', '/reset-password'])
 const protectedRoutes = ['/dashboard', '/challenge', '/profile', '/settings']
 
 export function middleware(request: NextRequest) {

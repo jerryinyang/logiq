@@ -1,6 +1,6 @@
 # Story 1.6: Implement Password Reset Flow
 
-Status: review
+Status: done
 
 <!-- Note: Validation is optional. Run validate-create-story for quality check before dev-story. -->
 
@@ -315,3 +315,13 @@ Modified files:
 - [x] [Review][Defer] **[LOW] In-memory rate limiter doesn't share across instances** — Pre-existing issue in `rate-limit.ts`, not introduced by this story. [web/src/lib/rate-limit.ts] — deferred, pre-existing
 - [x] [Review][Defer] **[LOW] No background cleanup for expired reset tokens** — Tokens only deleted on use. Without cleanup job, table grows indefinitely. [password_reset_tokens table] — deferred, needs infra
 - [x] [Review][Defer] **[LOW] Open redirect via `//evil.com` bypasses `startsWith('/')`** — Pre-existing in login page, not introduced by story 1.6. [web/src/app/(auth)/login/page.tsx:90] — deferred, pre-existing
+
+**Review (2026-05-12) — Round 3 Findings:**
+
+- [x] [Review][Patch] **[CRITICAL] Dev-mode email bypass regression** — `sendPasswordResetEmail` at `web/src/lib/email/index.ts:48-52` still skipped external providers when `NODE_ENV !== "production"`, despite being marked fixed in Round 2. Emails were logged to terminal/file instead of being delivered via Resend/SMTP. **FIXED:** Removed the dev-mode shortcut block so configured provider is always used. Console and file logging remain as non-blocking side effects.
+- [ ] [Review][Decision] **[MED] Security audit logs are ephemeral** — `securityLog` in `web/src/lib/audit.ts` only writes to `console.log`. All security events (PASSWORD_RESET_REQUESTED, PASSWORD_RESET_COMPLETED, SESSIONS_REVOKED) are lost on restart or log rotation. The spec calls for an "audit trail". How should these be persisted? Options: (1) Database table for audit logs, (2) Structured JSON log files on disk, (3) External logging service (e.g. Datadog, CloudWatch). [web/src/lib/audit.ts:1-38]
+- [x] [Review][Patch] **[HIGH] Premature bcrypt hash enables DoS** — `bcrypt.hash(password, 12)` in `reset-password/route.ts` was computed BEFORE the DB transaction validated the token. An attacker with an invalid token could trigger expensive hashing. **FIXED:** Moved `bcrypt.hash` inside the transaction after token validation succeeds. [web/src/app/api/auth/reset-password/route.ts:76]
+- [x] [Review][Patch] **[HIGH] Session revocation outside transaction** — `revokeUserSessions` ran AFTER the password-update transaction committed. If it failed, the password changed but sessions stayed active. **FIXED:** Refactored `revokeUserSessions` to accept an optional transaction parameter and moved the call inside the DB transaction so session revocation is atomic with the password update. [web/src/app/api/auth/reset-password/route.ts:109, web/src/lib/auth.ts:112]
+- [x] [Review][Patch] **[MED] middleware.ts authRoutes path mismatch** — `authRoutes` contained `/auth/forgot-password` and `/auth/reset-password` but actual routes are `/forgot-password` and `/reset-password`. **FIXED:** Updated `authRoutes` to the correct paths. [web/src/middleware.ts:5]
+- [x] [Review][Defer] **[LOW] In-memory rate limiter doesn't share across instances** — Pre-existing issue in `rate-limit.ts`, not introduced by this story. [web/src/lib/rate-limit.ts] — deferred, pre-existing
+- [x] [Review][Defer] **[LOW] No background cleanup for expired reset tokens** — Tokens only deleted on use. Without cleanup job, table grows indefinitely. [password_reset_tokens table] — deferred, needs infra

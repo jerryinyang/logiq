@@ -15,6 +15,7 @@ vi.mock("@/lib/db", () => ({
 
 vi.mock("@/lib/auth", () => ({
   revokeUserSessions: vi.fn(),
+  SESSION_COOKIE: "logiq_session",
 }))
 
 vi.mock("bcryptjs", () => ({
@@ -185,7 +186,7 @@ describe("POST /api/auth/reset-password", () => {
 
     await POST(request)
 
-    expect(auth.revokeUserSessions).toHaveBeenCalledWith(mockUserId)
+    expect(auth.revokeUserSessions).toHaveBeenCalledWith(mockUserId, expect.anything())
   })
 
   it("should return 400 for invalid/expired token", async () => {
