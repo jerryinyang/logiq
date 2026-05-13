@@ -101,8 +101,15 @@ export async function POST(request: Request) {
         path: "/",
         maxAge: rememberMe ? 90 * 24 * 60 * 60 : 30 * 24 * 60 * 60,
       })
+      csrfCookieStore.set("logiq_role", user.role, {
+        httpOnly: false,
+        secure: process.env.NODE_ENV === "production" || process.env.FORCE_SECURE_COOKIE === "true",
+        sameSite: "lax",
+        path: "/",
+        maxAge: rememberMe ? 90 * 24 * 60 * 60 : 30 * 24 * 60 * 60,
+      })
     } catch {
-      // Cookies API unavailable in test/non-request context — skip CSRF cookie
+      // Cookies API unavailable in test/non-request context — skip cookies
     }
 
     return NextResponse.json({

@@ -108,6 +108,23 @@ export async function GET(
       const token = await createSession(existingAccount.user_id)
       await setSessionCookie(token)
 
+      const [existingUserForRole] = await db
+        .select({ role: users.role })
+        .from(users)
+        .where(eq(users.id, existingAccount.user_id))
+        .limit(1)
+
+      try {
+        const cs = await cookies()
+        cs.set("logiq_role", existingUserForRole?.role ?? "user", {
+          httpOnly: false,
+          secure: process.env.NODE_ENV === "production" || process.env.FORCE_SECURE_COOKIE === "true",
+          sameSite: "lax",
+          path: "/",
+          maxAge: 30 * 24 * 60 * 60,
+        })
+      } catch { /* skip in test */ }
+
       console.info("OAuth login successful (existing account link)", {
         provider,
         userId: existingAccount.user_id,
@@ -164,6 +181,17 @@ export async function GET(
 
     const token = await createSession(userId)
     await setSessionCookie(token)
+
+    try {
+      const cs = await cookies()
+      cs.set("logiq_role", existingUser ? existingUser.role : "user", {
+        httpOnly: false,
+        secure: process.env.NODE_ENV === "production" || process.env.FORCE_SECURE_COOKIE === "true",
+        sameSite: "lax",
+        path: "/",
+        maxAge: 30 * 24 * 60 * 60,
+      })
+    } catch { /* skip in test */ }
 
     console.info("OAuth login successful", { provider, userId, isNewUser: !existingUser })
 

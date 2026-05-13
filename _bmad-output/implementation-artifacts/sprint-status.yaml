@@ -35,7 +35,7 @@
 # - Dev moves story to 'review', then runs code-review (fresh context, different LLM recommended)
 
 generated: 2026-04-14
-last_updated: 2026-05-12
+last_updated: 2026-05-13
 project: logiq
 project_key: NOKEY
 tracking_system: file-system
@@ -52,7 +52,7 @@ development_status:
   1-4-implement-user-login-with-better-auth: done
   1-5-implement-oauth-login-github-google: done
   1-6-implement-password-reset-flow: done
-  1-7-implement-user-account-management-rbac: ready-for-dev
+  1-7-implement-user-account-management-rbac: done
   epic-1-retrospective: optional
 
   # ==============================
