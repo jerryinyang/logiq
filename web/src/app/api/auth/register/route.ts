@@ -5,6 +5,7 @@ import { eq } from "drizzle-orm"
 import bcrypt from "bcryptjs"
 import { registerApiSchema } from "@/lib/validations/auth"
 import { createSession, setSessionCookie } from "@/lib/auth"
+import { cookies } from "next/headers"
 import { checkRateLimit } from "@/lib/rate-limit"
 
 const BCRYPT_COST_FACTOR = 12
@@ -83,6 +84,19 @@ export async function POST(request: Request) {
     const token = await createSession(user.id)
     await setSessionCookie(token)
 
+    try {
+      const cookieStore = await cookies()
+      cookieStore.set("logiq_role", "user", {
+        httpOnly: false,
+        secure: process.env.NODE_ENV === "production" || process.env.FORCE_SECURE_COOKIE === "true",
+        sameSite: "lax",
+        path: "/",
+        maxAge: 30 * 24 * 60 * 60,
+      })
+    } catch {
+      // Cookies API unavailable in test/non-request context
+    }
+
     return NextResponse.json(result.data)
   } catch (error) {
     if (isUniqueConstraintError(error)) {
@@ -91,7 +105,7 @@ export async function POST(request: Request) {
         { status: 409 },
       )
     }
-    console.error("Registration error: Please check server logs for details.")
+    console.error("Registration error:", error)
     return NextResponse.json(
       { success: false, message: "An unexpected error occurred. Please try again." },
       { status: 500 },

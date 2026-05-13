@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, Suspense } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { useForm } from 'react-hook-form'
@@ -11,10 +11,12 @@ import { FormInput } from '@/components/auth/form-input'
 import { SubmitButton } from '@/components/auth/submit-button'
 import { FormAlert } from '@/components/auth/form-alert'
 import { PasswordStrength } from '@/components/auth/password-strength'
+import { OAuthButtons } from '@/components/auth/oauth-buttons'
+import { Divider } from '@/components/auth/divider'
 import { StaggerContainer, StaggerItem } from '@/components/auth/animated-container'
 import { registerSchema, type RegisterFormData } from '@/lib/validations/auth'
 
-export default function RegisterPage() {
+function RegisterForm() {
   const router = useRouter()
   const [isLoading, setIsLoading] = useState(false)
   const [serverError, setServerError] = useState('')
@@ -82,11 +84,11 @@ export default function RegisterPage() {
       title="Create your account"
       description="Join LOGIQ and start your learning journey"
     >
-      <form onSubmit={handleSubmit(onSubmit)} noValidate>
-        <StaggerContainer className="space-y-5" staggerDelay={0.08}>
-          <FormAlert type="error" message={serverError} />
+      <StaggerContainer className="space-y-5" staggerDelay={0.08}>
+        <form onSubmit={handleSubmit(onSubmit)} noValidate>
+          <div className="space-y-5">
+            <FormAlert type="error" message={serverError} />
 
-          <StaggerItem>
             <FormInput
               label="Display name"
               id="displayName"
@@ -96,9 +98,7 @@ export default function RegisterPage() {
               error={errors.displayName?.message}
               {...register('displayName')}
             />
-          </StaggerItem>
 
-          <StaggerItem>
             <FormInput
               label="Email address"
               id="email"
@@ -108,9 +108,7 @@ export default function RegisterPage() {
               error={errors.email?.message}
               {...register('email')}
             />
-          </StaggerItem>
 
-          <StaggerItem>
             <FormInput
               label="Password"
               id="password"
@@ -123,9 +121,7 @@ export default function RegisterPage() {
               {...register('password')}
             />
             <PasswordStrength password={password} show={showPasswordStrength} />
-          </StaggerItem>
 
-          <StaggerItem>
             <FormInput
               label="Confirm password"
               id="confirmPassword"
@@ -136,9 +132,7 @@ export default function RegisterPage() {
               error={errors.confirmPassword?.message}
               {...register('confirmPassword')}
             />
-          </StaggerItem>
 
-          <StaggerItem>
             <SubmitButton
               isLoading={isLoading}
               loadingText="Creating account..."
@@ -146,9 +140,7 @@ export default function RegisterPage() {
             >
               Create account
             </SubmitButton>
-          </StaggerItem>
 
-          <StaggerItem>
             <p className="text-center text-sm text-muted-foreground">
               Already have an account?{' '}
               <Link
@@ -158,9 +150,36 @@ export default function RegisterPage() {
                 Sign in
               </Link>
             </p>
-          </StaggerItem>
-        </StaggerContainer>
-      </form>
+          </div>
+        </form>
+
+        <StaggerItem>
+          <Divider />
+        </StaggerItem>
+
+        <StaggerItem>
+          <OAuthButtons />
+        </StaggerItem>
+      </StaggerContainer>
     </AuthLayout>
+  )
+}
+
+export default function RegisterPage() {
+  return (
+    <Suspense
+      fallback={
+        <AuthLayout
+          title="Loading..."
+          description="Please wait"
+        >
+          <div className="flex justify-center py-8">
+            <div className="h-6 w-6 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+          </div>
+        </AuthLayout>
+      }
+    >
+      <RegisterForm />
+    </Suspense>
   )
 }

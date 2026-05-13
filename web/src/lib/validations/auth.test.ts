@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest"
-import { registerSchema, type RegisterFormData } from "./auth"
+import { registerSchema, signInSchema, type RegisterFormData, type SignInFormData } from "./auth"
 
 const validInput = {
   email: "john@example.com",
@@ -140,5 +140,61 @@ it("should trim leading/trailing whitespace from passwords", () => {
       displayName: "Test User",
     }
     expect(data.email).toBe("test@example.com")
+  })
+})
+
+const validSignIn = {
+  email: "john@example.com",
+  password: "MyPassword1!",
+}
+
+describe("signInSchema", () => {
+  it("should accept valid sign-in data", () => {
+    const result = signInSchema.safeParse(validSignIn)
+    expect(result.success).toBe(true)
+  })
+
+  it("should accept sign-in with rememberMe=true", () => {
+    const result = signInSchema.safeParse({ ...validSignIn, rememberMe: true })
+    expect(result.success).toBe(true)
+    if (result.success) {
+      expect(result.data.rememberMe).toBe(true)
+    }
+  })
+
+  it("should default rememberMe to false when not provided", () => {
+    const result = signInSchema.safeParse(validSignIn)
+    expect(result.success).toBe(true)
+    if (result.success) {
+      expect(result.data.rememberMe).toBe(false)
+    }
+  })
+
+  it("should reject invalid email", () => {
+    const result = signInSchema.safeParse({ ...validSignIn, email: "not-an-email" })
+    expect(result.success).toBe(false)
+    if (!result.success) {
+      expect(result.error.issues[0].path).toContain("email")
+    }
+  })
+
+  it("should reject empty email", () => {
+    const result = signInSchema.safeParse({ ...validSignIn, email: "" })
+    expect(result.success).toBe(false)
+  })
+
+  it("should reject empty password", () => {
+    const result = signInSchema.safeParse({ ...validSignIn, password: "" })
+    expect(result.success).toBe(false)
+  })
+
+  it("should support SignInFormData type inference", () => {
+    const data: SignInFormData = {
+      email: "test@example.com",
+      password: "ValidPass1!",
+      rememberMe: true,
+    }
+    expect(data.email).toBe("test@example.com")
+    expect(data.rememberMe).toBe(true)
   })
 })

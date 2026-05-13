@@ -1,8 +1,9 @@
 'use client'
 
-import { useState, useEffect } from 'react'
-import { useRouter } from 'next/navigation'
+import { useState, useEffect, useRef, Suspense } from 'react'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { motion } from 'framer-motion'
+import { toast } from 'sonner'
 import { LogiqLogo } from '@/components/logiq-logo'
 import { Button } from '@/components/ui/button'
 import { 
@@ -49,11 +50,14 @@ interface DashboardContentProps {
   user: AppUser
 }
 
-export function DashboardContent({ user }: DashboardContentProps) {
+function DashboardContentInner({ user }: DashboardContentProps) {
   const router = useRouter()
+  const searchParams = useSearchParams()
   const [isLoggingOut, setIsLoggingOut] = useState(false)
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
   const [storedUser, setStoredUser] = useState<StoredUser | null>(null)
+
+  const accessDeniedShown = useRef(false)
 
   // Get stored user data and initialize activity tracking
   useEffect(() => {
@@ -64,6 +68,15 @@ export function DashboardContent({ user }: DashboardContentProps) {
     const cleanup = initActivityTracking()
     return cleanup
   }, [])
+
+  useEffect(() => {
+    const error = searchParams.get('error')
+    if (error === 'access_denied' && !accessDeniedShown.current) {
+      accessDeniedShown.current = true
+      toast.error('Access denied. Admin privileges required.')
+      window.history.replaceState({}, '', '/dashboard')
+    }
+  }, [searchParams])
 
   // Use stored user data if available, otherwise fall back to app user
   const firstName = String(storedUser?.firstName || user.user_metadata?.first_name || 'User')
@@ -78,12 +91,15 @@ export function DashboardContent({ user }: DashboardContentProps) {
       // Clear local session
       clearSession()
       
-      // Sign out from Supabase
-      await fetch('/api/auth/sign-out', { method: 'POST' })
+      // Sign out from server
+      const signOutRes = await fetch('/api/auth/sign-out', { method: 'POST' })
+      if (!signOutRes.ok) throw new Error('Logout request failed')
       router.push('/')
       router.refresh()
+      toast.success('You have been signed out')
     } catch (error) {
       console.error('Logout error:', error)
+      toast.error('Failed to sign out')
       setIsLoggingOut(false)
     }
   }
@@ -158,7 +174,7 @@ export function DashboardContent({ user }: DashboardContentProps) {
                     </div>
                   </div>
                   <DropdownMenuSeparator />
-                  <DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => router.push('/profile')}>
                     <User className="mr-2 h-4 w-4" />
                     Profile
                   </DropdownMenuItem>
@@ -292,5 +308,13 @@ export function DashboardContent({ user }: DashboardContentProps) {
         </motion.div>
       </main>
     </div>
+  )
+}
+
+export function DashboardContent(props: DashboardContentProps) {
+  return (
+    <Suspense fallback={<div className="min-h-screen flex items-center justify-center bg-background"><div className="h-6 w-6 animate-spin rounded-full border-2 border-primary border-t-transparent" /></div>}>
+      <DashboardContentInner {...props} />
+    </Suspense>
   )
 }
