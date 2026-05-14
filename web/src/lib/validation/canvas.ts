@@ -7,7 +7,7 @@ export const positionSchema = z.object({
 
 export const canvasNodeSchema = z.object({
   id: z.string().min(1),
-  type: z.enum(['condition', 'loop', 'variable', 'function', 'output', 'input', 'operator', 'comment']),
+  type: z.enum(['loop', 'condition', 'comparison', 'assignment', 'return', 'variable', 'edgeCase']),
   label: z.string().min(1),
   position: positionSchema,
   data: z.record(z.string(), z.unknown()).optional().default({}),

@@ -18,6 +18,7 @@ describe('canvas-store', () => {
       canUndo: false,
       canRedo: false,
       historyStack: [],
+      redoStack: [],
       status: 'idle',
     })
   })

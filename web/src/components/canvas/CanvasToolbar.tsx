@@ -2,7 +2,7 @@
 
 import { Controls, Panel } from '@xyflow/react'
 import { Button } from '@/components/ui/button'
-import { Undo2, Redo2 } from 'lucide-react'
+import { Undo2, Redo2, Trash2 } from 'lucide-react'
 import { useCanvasStore } from '@/stores/canvas-store'
 
 interface CanvasToolbarProps {
@@ -10,7 +10,7 @@ interface CanvasToolbarProps {
 }
 
 export function CanvasToolbar({ className }: CanvasToolbarProps) {
-  const { canUndo, canRedo, undo, redo } = useCanvasStore()
+  const { canUndo, canRedo, undo, redo, selectedBlockIds, removeBlocks } = useCanvasStore()
 
   return (
     <>
@@ -36,6 +36,17 @@ export function CanvasToolbar({ className }: CanvasToolbarProps) {
           >
             <Redo2 className="h-4 w-4" />
           </Button>
+          {selectedBlockIds.length > 1 && (
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => removeBlocks(selectedBlockIds)}
+              aria-label="Delete Selected"
+              tabIndex={0}
+            >
+              <Trash2 className="h-4 w-4 text-destructive" />
+            </Button>
+          )}
         </div>
       </Panel>
       <Controls

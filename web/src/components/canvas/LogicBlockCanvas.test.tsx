@@ -6,8 +6,8 @@ vi.mock('@xyflow/react', async () => {
   const actual = await vi.importActual<typeof import('@xyflow/react')>('@xyflow/react')
   return {
     ...actual,
-    ReactFlow: ({ children, ariaLabelConfig }: any) => (
-      <div data-testid="react-flow" aria-label={ariaLabelConfig?.title}>
+    ReactFlow: ({ children }: any) => (
+      <div data-testid="react-flow">
         {children}
       </div>
     ),
@@ -15,6 +15,10 @@ vi.mock('@xyflow/react', async () => {
     Background: () => <div data-testid="background" />,
     Panel: ({ children }: any) => <div data-testid="panel">{children}</div>,
     Controls: () => <div data-testid="controls" />,
+    useReactFlow: () => ({
+      screenToFlowPosition: (pos: { x: number; y: number }) => pos,
+    }),
+    SelectionMode: { Partial: 1 },
   }
 })
 
@@ -26,15 +30,30 @@ vi.mock('./CanvasEmptyState', () => ({
   CanvasEmptyState: () => <div data-testid="canvas-empty-state" />,
 }))
 
+vi.mock('./LogicBlockNode', () => ({
+  LogicBlockNode: () => <div data-testid="logic-block-node" />,
+}))
+
 vi.mock('@/hooks/use-canvas-keyboard', () => ({
   useCanvasKeyboard: () => ({ handleKeyDown: vi.fn() }),
 }))
 
-vi.mock('@/stores/canvas-store', () => ({
-  useCanvasStore: () => ({
-    pushHistory: vi.fn(),
-  }),
-}))
+vi.mock('@/stores/canvas-store', () => {
+  const state = {
+    nodes: [],
+    edges: [],
+    setNodes: vi.fn(),
+    setEdges: vi.fn(),
+    addBlock: vi.fn(),
+    setSelectedBlockIds: vi.fn(),
+    removeBlock: vi.fn(),
+    duplicateBlock: vi.fn(),
+    removeBlocks: vi.fn(),
+  }
+  return {
+    useCanvasStore: (selector?: any) => selector ? selector(state) : state,
+  }
+})
 
 describe('LogicBlockCanvas', () => {
   it('renders within ReactFlowProvider', () => {
