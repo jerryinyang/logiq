@@ -64,6 +64,13 @@ All runnable code (Next.js app, components, etc.) MUST be created in the `web/` 
 - Project root: `/home/l2e/smirk/logiq/web/`
 - Example: `web/src/app/`, `web/src/components/`, etc.
 
+## Runnable Code Location
+
+All runnable code (Next.js app, components, etc.) MUST be created in the `web/` subfolder at the project root, NOT in the root directory. This avoids conflicts with architectural docs and BMad tooling.
+
+- Project root: `/home/l2e/smirk/logiq/web/`
+- Example: `web/src/app/`, `web/src/components/`, etc.
+
 ## Dev Notes
 
 ### Architecture Patterns & Constraints

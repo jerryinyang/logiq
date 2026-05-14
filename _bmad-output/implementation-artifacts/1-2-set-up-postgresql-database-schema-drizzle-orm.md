@@ -74,6 +74,13 @@ All runnable code (database schema, Drizzle config, etc.) MUST be created in the
 - Project root for code: `/home/l2e/smirk/logiq/web/`
 - Example: `web/src/lib/db/`, `web/drizzle.config.ts`, etc.
 
+## Runnable Code Location
+
+All runnable code (database schema, Drizzle config, etc.) MUST be created in the `web/` subfolder at the project root, NOT in the root directory. This avoids conflicts with architectural docs and BMad tooling.
+
+- Project root for code: `/home/l2e/smirk/logiq/web/`
+- Example: `web/src/lib/db/`, `web/drizzle.config.ts`, etc.
+
 ## Dev Notes
 
 ### Architecture Patterns & Constraints
