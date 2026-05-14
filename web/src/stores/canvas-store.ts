@@ -1,14 +1,23 @@
 import { create } from 'zustand'
 import { immer } from 'zustand/middleware/immer'
-import type { CanvasState, CanvasViewport, HistoryEntry, BlockType, BlockCategory } from '@/types/canvas-types'
+import type { CanvasState, CanvasViewport, HistoryEntry, BlockType, BlockCategory, ConnectionValidationError } from '@/types/canvas-types'
 import type { Node, Edge, XYPosition } from '@xyflow/react'
+import { isValidBlockConnection } from '@/lib/canvas/block-validation'
+import { wouldCreateCycle } from '@/lib/canvas/cycle-detection'
 
 const MAX_HISTORY = 50
+
+interface ValidationResult {
+  valid: boolean
+  error?: ConnectionValidationError
+  reason?: string
+}
 
 interface CanvasStoreState extends Omit<CanvasState, 'viewport'> {
   viewport: CanvasViewport
   nodes: Node[]
   edges: Edge[]
+  lastValidationError: string | null
   redoStack: HistoryEntry[]
   pushHistory: (nodes: Node[], edges: Edge[]) => void
   setNodes: (nodesOrUpdater: Node[] | ((prev: Node[]) => Node[])) => void
@@ -18,6 +27,11 @@ interface CanvasStoreState extends Omit<CanvasState, 'viewport'> {
   removeBlocks: (blockIds: string[]) => void
   duplicateBlock: (blockId: string) => void
   getBlocksByCategory: (category: BlockType) => Node[]
+  addEdge: (edge: Edge) => void
+  removeEdge: (edgeId: string) => void
+  validateConnection: (sourceId: string, targetId: string, sourceHandleType?: string, targetHandleType?: string) => ValidationResult
+  getBlockGraph: () => { nodes: Node[]; edges: Edge[] }
+  setLastValidationError: (error: string | null) => void
   setSelectedBlockIds: (ids: string[]) => void
   setZoom: (zoom: number) => void
   setViewport: (viewport: CanvasViewport) => void
@@ -39,6 +53,7 @@ export const useCanvasStore = create<CanvasStoreState>()(
     status: 'idle',
     nodes: [],
     edges: [],
+    lastValidationError: null,
 
     setNodes: (nodesOrUpdater: Node[] | ((prev: Node[]) => Node[])) => {
       set((state) => {
@@ -215,6 +230,103 @@ export const useCanvasStore = create<CanvasStoreState>()(
         (node) => (node.data as Record<string, unknown>)?.block &&
           ((node.data as Record<string, unknown>).block as Record<string, unknown>)?.type === category
       )
+    },
+
+    addEdge: (edge: Edge) => {
+      const state = get()
+      const currentNodes = [...state.nodes]
+      const currentEdges = [...state.edges]
+
+      set((state) => {
+        state.historyStack.push({
+          timestamp: Date.now(),
+          nodes: JSON.parse(JSON.stringify(currentNodes)),
+          edges: JSON.parse(JSON.stringify(currentEdges)),
+        })
+        if (state.historyStack.length > MAX_HISTORY) {
+          state.historyStack = state.historyStack.slice(-MAX_HISTORY)
+        }
+        state.edges = [...currentEdges, edge]
+        state.redoStack = []
+        state.canUndo = true
+        state.canRedo = false
+        state.lastValidationError = null
+      })
+    },
+
+    removeEdge: (edgeId: string) => {
+      const state = get()
+      const currentNodes = [...state.nodes]
+      const currentEdges = [...state.edges]
+
+      set((state) => {
+        state.historyStack.push({
+          timestamp: Date.now(),
+          nodes: JSON.parse(JSON.stringify(currentNodes)),
+          edges: JSON.parse(JSON.stringify(currentEdges)),
+        })
+        if (state.historyStack.length > MAX_HISTORY) {
+          state.historyStack = state.historyStack.slice(-MAX_HISTORY)
+        }
+        state.edges = currentEdges.filter((e) => e.id !== edgeId)
+        state.redoStack = []
+        state.canUndo = true
+        state.canRedo = false
+      })
+    },
+
+    validateConnection: (sourceId: string, targetId: string, sourceHandleType?: string, targetHandleType?: string) => {
+      const state = get()
+      const sourceNode = state.nodes.find((n) => n.id === sourceId)
+      const targetNode = state.nodes.find((n) => n.id === targetId)
+
+      if (!sourceNode || !targetNode) {
+        return { valid: false, error: 'incompatible-types' as ConnectionValidationError, reason: 'Source or target node not found' }
+      }
+
+      if (sourceId === targetId) {
+        return { valid: false, error: 'self-connection' as ConnectionValidationError, reason: 'Cannot connect a block to itself' }
+      }
+
+      if (sourceHandleType === 'target' || targetHandleType === 'source') {
+        return { valid: false, error: 'wrong-direction' as ConnectionValidationError, reason: 'Cannot connect — must connect output to input' }
+      }
+
+      const existingIncomer = state.edges.find((e) => e.target === targetId)
+      if (existingIncomer) {
+        return { valid: false, error: 'duplicate-input' as ConnectionValidationError, reason: 'This block already has an incoming connection' }
+      }
+
+      const sourceBlock = (sourceNode.data as Record<string, unknown>)?.block as Record<string, unknown> | undefined
+      const targetBlock = (targetNode.data as Record<string, unknown>)?.block as Record<string, unknown> | undefined
+      const sourceType = sourceBlock?.type as BlockType | undefined
+      const targetType = targetBlock?.type as BlockType | undefined
+
+      if (!sourceType || !targetType) {
+        return { valid: false, error: 'incompatible-types' as ConnectionValidationError, reason: 'Invalid block types' }
+      }
+
+      const typeValidation = isValidBlockConnection(sourceType, targetType)
+      if (!typeValidation.valid) {
+        return { valid: false, error: 'incompatible-types' as ConnectionValidationError, reason: typeValidation.reason }
+      }
+
+      if (wouldCreateCycle(state.nodes, state.edges, { source: sourceId, target: targetId })) {
+        return { valid: false, error: 'cycle-detected' as ConnectionValidationError, reason: 'Cannot create circular logic — this would cause infinite execution' }
+      }
+
+      return { valid: true }
+    },
+
+    getBlockGraph: () => {
+      const state = get()
+      return { nodes: state.nodes, edges: state.edges }
+    },
+
+    setLastValidationError: (error: string | null) => {
+      set((state) => {
+        state.lastValidationError = error
+      })
     },
 
     setSelectedBlockIds: (ids: string[]) => {

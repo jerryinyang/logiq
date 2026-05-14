@@ -70,16 +70,26 @@ export interface CanvasNode {
   data: Record<string, unknown>
 }
 
+export type BlockConnectionType = 'blockConnection'
+
 export interface CanvasEdge {
   id: string
   source: string
   target: string
   sourceHandle?: string
   targetHandle?: string
-  type?: 'default' | 'step' | 'smoothstep' | 'straight'
+  type?: BlockConnectionType | 'default' | 'step' | 'smoothstep' | 'straight'
   animated?: boolean
   data?: Record<string, unknown>
 }
+
+export type ConnectionValidationError =
+  | 'incompatible-types'
+  | 'self-connection'
+  | 'wrong-direction'
+  | 'duplicate-input'
+  | 'cycle-detected'
+  | 'terminal-source'
 
 export interface HistoryEntry {
   timestamp: number

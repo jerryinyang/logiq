@@ -1,6 +1,6 @@
 'use client'
 
-import { useCallback } from 'react'
+import { useCallback, useState } from 'react'
 import {
   ReactFlow,
   ReactFlowProvider,
@@ -10,22 +10,32 @@ import {
   useReactFlow,
   type Node,
   type Edge,
+  type Connection,
   type OnNodesChange,
   type OnEdgesChange,
   type OnSelectionChangeFunc,
   type NodeTypes,
+  type EdgeTypes,
   applyNodeChanges,
   applyEdgeChanges,
 } from '@xyflow/react'
 import { LogicBlockNode } from './LogicBlockNode'
+import { BlockConnection } from './BlockConnection'
 import { CanvasToolbar } from './CanvasToolbar'
 import { CanvasEmptyState } from './CanvasEmptyState'
 import { useCanvasKeyboard } from '@/hooks/use-canvas-keyboard'
+import { useCanvasAnnouncer } from '@/hooks/use-canvas-announcer'
 import { useCanvasStore } from '@/stores/canvas-store'
+import { BLOCK_LABELS } from '@/lib/canvas/block-validation'
+import type { BlockType } from '@/types/canvas-types'
 import type { BlockVocabularyEntry } from '@/lib/canvas/block-vocabulary'
 
 const nodeTypes: NodeTypes = {
   logicBlock: LogicBlockNode,
+}
+
+const edgeTypes: EdgeTypes = {
+  blockConnection: BlockConnection,
 }
 
 function CanvasContent() {
@@ -34,9 +44,14 @@ function CanvasContent() {
   const setNodes = useCanvasStore((s) => s.setNodes)
   const setEdges = useCanvasStore((s) => s.setEdges)
   const addBlock = useCanvasStore((s) => s.addBlock)
+  const addEdge = useCanvasStore((s) => s.addEdge)
   const setSelectedBlockIds = useCanvasStore((s) => s.setSelectedBlockIds)
   const pushHistory = useCanvasStore((s) => s.pushHistory)
+  const validateConnection = useCanvasStore((s) => s.validateConnection)
   const { screenToFlowPosition } = useReactFlow()
+  const { announceConnection, announceRejection } = useCanvasAnnouncer()
+
+  const [connectingFrom, setConnectingFrom] = useState<string | null>(null)
 
   const onNodesChange: OnNodesChange = useCallback(
     (changes) => {
@@ -67,6 +82,77 @@ function CanvasContent() {
       setSelectedBlockIds(selectedNodes.map((n) => n.id))
     },
     [setSelectedBlockIds]
+  )
+
+  const isValidConnection = useCallback(
+    (connectionOrEdge: Connection | Edge): boolean => {
+      const source = connectionOrEdge.source
+      const target = connectionOrEdge.target
+      if (!source || !target) return false
+
+      const sourceHandle = 'sourceHandle' in connectionOrEdge ? connectionOrEdge.sourceHandle : undefined
+      const targetHandle = 'targetHandle' in connectionOrEdge ? connectionOrEdge.targetHandle : undefined
+
+      const result = validateConnection(source, target, sourceHandle ?? undefined, targetHandle ?? undefined)
+      if (!result.valid) {
+        return false
+      }
+      return true
+    },
+    [validateConnection]
+  )
+
+  const onConnect = useCallback(
+    (connection: Connection) => {
+      const { source, target } = connection
+      if (!source || !target) return
+
+      const sourceNode = useCanvasStore.getState().nodes.find((n) => n.id === source)
+      const targetNode = useCanvasStore.getState().nodes.find((n) => n.id === target)
+      if (!sourceNode || !targetNode) return
+
+      const sourceBlock = (sourceNode.data as Record<string, unknown>)?.block as Record<string, unknown> | undefined
+      const targetBlock = (targetNode.data as Record<string, unknown>)?.block as Record<string, unknown> | undefined
+      const sourceType = sourceBlock?.type as BlockType | undefined
+      const targetType = targetBlock?.type as BlockType | undefined
+      const sourceLabel = (sourceType && BLOCK_LABELS[sourceType]) ?? 'Block'
+      const targetLabel = (targetType && BLOCK_LABELS[targetType]) ?? 'Block'
+
+      const newEdge: Edge = {
+        id: `edge-${source}-${target}`,
+        source,
+        target,
+        type: 'blockConnection',
+        animated: true,
+      }
+
+      addEdge(newEdge)
+
+      announceConnection(sourceLabel, targetLabel)
+
+      setTimeout(() => {
+        useCanvasStore.getState().setEdges((eds: Edge[]) =>
+          eds.map((e) =>
+            e.id === newEdge.id ? { ...e, animated: false } : e
+          )
+        )
+      }, 500)
+    },
+    [addEdge, announceConnection]
+  )
+
+  const onConnectStart = useCallback(
+    (_event: MouseEvent | TouchEvent, _params: { nodeId: string | null; handleId: string | null; handleType: string | null }) => {
+      setConnectingFrom(_params.nodeId)
+    },
+    []
+  )
+
+  const onConnectEnd = useCallback(
+    (_event: MouseEvent | TouchEvent) => {
+      setConnectingFrom(null)
+    },
+    []
   )
 
   const onDragOver = useCallback((event: React.DragEvent) => {
@@ -123,12 +209,23 @@ function CanvasContent() {
 
   return (
     <div className="h-full w-full" role="application" aria-label="Logic Block Canvas — interactive workspace">
+      <div
+        id="logiq-canvas-announcer"
+        aria-live="polite"
+        aria-atomic="true"
+        className="sr-only"
+      />
       <ReactFlow
         nodes={nodes}
         edges={edges}
         nodeTypes={nodeTypes}
+        edgeTypes={edgeTypes}
         onNodesChange={onNodesChange}
         onEdgesChange={onEdgesChange}
+        onConnect={onConnect}
+        isValidConnection={isValidConnection}
+        onConnectStart={onConnectStart}
+        onConnectEnd={onConnectEnd}
         onSelectionChange={onSelectionChange}
         onDragOver={onDragOver}
         onDrop={onDrop}
@@ -156,6 +253,8 @@ function CanvasContent() {
     </div>
   )
 }
+
+export { CanvasContent }
 
 export function LogicBlockCanvas() {
   return (

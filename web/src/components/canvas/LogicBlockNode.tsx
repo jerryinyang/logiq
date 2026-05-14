@@ -36,7 +36,7 @@ function LogicBlockNodeInner({ data, id, selected }: NodeProps<LogicBlockNodeTyp
           <Handle
             type="target"
             position={Position.Top}
-            className="!h-2 !w-2 !border-2 !border-[#334155] !bg-[#64748B]"
+            className="!h-2 !w-2 !border-2 !border-[#334155] !bg-[#6366F1]"
           />
 
           <div className="flex items-center gap-2">
@@ -55,11 +55,13 @@ function LogicBlockNodeInner({ data, id, selected }: NodeProps<LogicBlockNodeTyp
 
           <p className="line-clamp-2 text-xs text-[#94A3B8]">{block.description}</p>
 
-          <Handle
-            type="source"
-            position={Position.Bottom}
-            className="!h-2 !w-2 !border-2 !border-[#334155] !bg-[#64748B]"
-          />
+          {block.type !== 'return' && (
+            <Handle
+              type="source"
+              position={Position.Bottom}
+              className="!h-2 !w-2 !border-2 !border-[#334155] !bg-[#10B981]"
+            />
+          )}
 
           <Tooltip>
             <TooltipTrigger asChild>

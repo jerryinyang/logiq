@@ -20,6 +20,9 @@ describe('canvas-store', () => {
       historyStack: [],
       redoStack: [],
       status: 'idle',
+      nodes: [],
+      edges: [],
+      lastValidationError: null,
     })
   })
 

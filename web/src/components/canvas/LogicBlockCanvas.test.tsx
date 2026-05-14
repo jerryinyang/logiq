@@ -38,6 +38,24 @@ vi.mock('@/hooks/use-canvas-keyboard', () => ({
   useCanvasKeyboard: () => ({ handleKeyDown: vi.fn() }),
 }))
 
+vi.mock('@/hooks/use-canvas-announcer', () => ({
+  useCanvasAnnouncer: () => ({
+    announceConnection: vi.fn(),
+    announceRejection: vi.fn(),
+    announceCycleRejection: vi.fn(),
+    announceDirectionError: vi.fn(),
+    announceFlow: vi.fn(),
+    announce: vi.fn(),
+  }),
+}))
+
+vi.mock('sonner', () => ({
+  toast: {
+    error: vi.fn(),
+    success: vi.fn(),
+  },
+}))
+
 vi.mock('@/stores/canvas-store', () => {
   const state = {
     nodes: [],
@@ -45,10 +63,17 @@ vi.mock('@/stores/canvas-store', () => {
     setNodes: vi.fn(),
     setEdges: vi.fn(),
     addBlock: vi.fn(),
+    addEdge: vi.fn(),
+    removeEdge: vi.fn(),
+    validateConnection: vi.fn(() => ({ valid: true })),
+    getBlockGraph: vi.fn(() => ({ nodes: [], edges: [] })),
+    setLastValidationError: vi.fn(),
     setSelectedBlockIds: vi.fn(),
     removeBlock: vi.fn(),
     duplicateBlock: vi.fn(),
     removeBlocks: vi.fn(),
+    pushHistory: vi.fn(),
+    lastValidationError: null,
   }
   return {
     useCanvasStore: (selector?: any) => selector ? selector(state) : state,
