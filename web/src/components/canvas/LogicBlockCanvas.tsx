@@ -1,6 +1,6 @@
 'use client'
 
-import { useCallback, useState } from 'react'
+import { useCallback, useState, useMemo, useEffect } from 'react'
 import {
   ReactFlow,
   ReactFlowProvider,
@@ -23,10 +23,14 @@ import { LogicBlockNode } from './LogicBlockNode'
 import { BlockConnection } from './BlockConnection'
 import { CanvasToolbar } from './CanvasToolbar'
 import { CanvasEmptyState } from './CanvasEmptyState'
+import { ExecutionProgressAnimation } from './ExecutionProgressAnimation'
+import { TestResults } from '@/components/challenge/TestResults'
 import { useCanvasKeyboard } from '@/hooks/use-canvas-keyboard'
 import { useCanvasAnnouncer } from '@/hooks/use-canvas-announcer'
 import { useCanvasStore } from '@/stores/canvas-store'
 import { BLOCK_LABELS } from '@/lib/canvas/block-validation'
+import { serializeCanvasState } from '@/lib/execution/serializer'
+import { submitSolution } from '@/actions/challenge-actions'
 import type { BlockType } from '@/types/canvas-types'
 import type { BlockVocabularyEntry } from '@/lib/canvas/block-vocabulary'
 
@@ -38,7 +42,7 @@ const edgeTypes: EdgeTypes = {
   blockConnection: BlockConnection,
 }
 
-function CanvasContent() {
+function CanvasContent({ challengeId }: { challengeId?: string }) {
   const nodes = useCanvasStore((s) => s.nodes)
   const edges = useCanvasStore((s) => s.edges)
   const setNodes = useCanvasStore((s) => s.setNodes)
@@ -48,10 +52,85 @@ function CanvasContent() {
   const setSelectedBlockIds = useCanvasStore((s) => s.setSelectedBlockIds)
   const pushHistory = useCanvasStore((s) => s.pushHistory)
   const validateConnection = useCanvasStore((s) => s.validateConnection)
+  const testStatus = useCanvasStore((s) => s.testStatus)
+  const testResults = useCanvasStore((s) => s.testResults)
+  const setTestStatus = useCanvasStore((s) => s.setTestStatus)
+  const setTestResults = useCanvasStore((s) => s.setTestResults)
+  const setExecutionSteps = useCanvasStore((s) => s.setExecutionSteps)
+  const executionSteps = useCanvasStore((s) => s.executionSteps)
+  const resetTest = useCanvasStore((s) => s.resetTest)
   const { screenToFlowPosition } = useReactFlow()
   const { announceConnection, announceRejection } = useCanvasAnnouncer()
 
   const [connectingFrom, setConnectingFrom] = useState<string | null>(null)
+  const [validationError, setValidationError] = useState<string | null>(null)
+
+  useEffect(() => {
+    if (testStatus !== 'success' && testStatus !== 'error') return
+    if (!executionSteps || executionSteps.length === 0) return
+
+    setNodes((nds: Node[]) =>
+      nds.map((node) => {
+        const step = executionSteps.find((s) => s.blockId === node.id)
+        if (!step) return node
+        return {
+          ...node,
+          data: {
+            ...node.data,
+            executionState: step.status === 'error' ? 'error' : 'success',
+          },
+        }
+      })
+    )
+  }, [testStatus, executionSteps, setNodes])
+
+  const handleTestSubmission = useCallback(async () => {
+    const currentStatus = useCanvasStore.getState().testStatus
+    if (currentStatus === 'running') return
+
+    setValidationError(null)
+    resetTest()
+
+    if (nodes.length === 0) {
+      setValidationError('Your blocks must be connected to form a complete logic flow')
+      setTestStatus('error')
+      return
+    }
+
+    const serializationResult = serializeCanvasState(nodes, edges)
+    if (!serializationResult.success || !serializationResult.data) {
+      setValidationError(serializationResult.error?.message ?? 'Your blocks must be connected to form a complete logic flow')
+      setTestStatus('error')
+      return
+    }
+
+    setTestStatus('running')
+
+    try {
+      const challengeIdToUse = challengeId ?? 'mock-1'
+      const result = await submitSolution(challengeIdToUse, serializationResult.data)
+
+      if (!result.success || !result.data) {
+        setTestStatus('error')
+        setValidationError(result.error?.message ?? 'An error occurred')
+        return
+      }
+
+      const report = result.data
+      setExecutionSteps(report.steps)
+      setTestResults(report.results)
+
+      const allPassed = report.results.length > 0 && report.results.every((r) => r.passed)
+      setTestStatus(allPassed ? 'success' : 'error')
+    } catch {
+      setTestStatus('error')
+      setValidationError('Execution failed unexpectedly')
+    }
+  }, [nodes, edges, challengeId, resetTest, setTestStatus, setTestResults, setExecutionSteps])
+
+  useCanvasKeyboard({
+    onTest: handleTestSubmission,
+  })
 
   const onNodesChange: OnNodesChange = useCallback(
     (changes) => {
@@ -205,10 +284,8 @@ function CanvasContent() {
     [addBlock, screenToFlowPosition]
   )
 
-  useCanvasKeyboard()
-
   return (
-    <div className="h-full w-full" role="application" aria-label="Logic Block Canvas — interactive workspace">
+    <div className="relative h-full w-full" role="application" aria-label="Logic Block Canvas — interactive workspace">
       <div
         id="logiq-canvas-announcer"
         aria-live="polite"
@@ -247,19 +324,28 @@ function CanvasContent() {
           size={1}
           color="#1E293B"
         />
-        <CanvasToolbar />
+        <CanvasToolbar challengeId={challengeId} onTest={handleTestSubmission} validationError={validationError} />
         {nodes.length === 0 && <CanvasEmptyState />}
       </ReactFlow>
+      <ExecutionProgressAnimation challengeId={challengeId} />
+      {testResults && (testStatus === 'success' || testStatus === 'error') && (
+        <div className="absolute bottom-20 left-1/2 -translate-x-1/2 z-10">
+          <TestResults
+            results={testResults}
+            onClose={resetTest}
+          />
+        </div>
+      )}
     </div>
   )
 }
 
 export { CanvasContent }
 
-export function LogicBlockCanvas() {
+export function LogicBlockCanvas({ challengeId }: { challengeId?: string }) {
   return (
     <ReactFlowProvider>
-      <CanvasContent />
+      <CanvasContent challengeId={challengeId} />
     </ReactFlowProvider>
   )
 }

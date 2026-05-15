@@ -1,6 +1,7 @@
 import { create } from 'zustand'
 import { immer } from 'zustand/middleware/immer'
 import type { CanvasState, CanvasViewport, HistoryEntry, BlockType, BlockCategory, ConnectionValidationError } from '@/types/canvas-types'
+import type { TestStatus, TestResult, ExecutionStep } from '@/types/execution-types'
 import type { Node, Edge, XYPosition } from '@xyflow/react'
 import { isValidBlockConnection } from '@/lib/canvas/block-validation'
 import { wouldCreateCycle } from '@/lib/canvas/cycle-detection'
@@ -19,6 +20,9 @@ interface CanvasStoreState extends Omit<CanvasState, 'viewport'> {
   edges: Edge[]
   lastValidationError: string | null
   redoStack: HistoryEntry[]
+  testStatus: TestStatus
+  testResults: TestResult[] | null
+  executionSteps: ExecutionStep[] | null
   pushHistory: (nodes: Node[], edges: Edge[]) => void
   setNodes: (nodesOrUpdater: Node[] | ((prev: Node[]) => Node[])) => void
   setEdges: (edgesOrUpdater: Edge[] | ((prev: Edge[]) => Edge[])) => void
@@ -37,6 +41,10 @@ interface CanvasStoreState extends Omit<CanvasState, 'viewport'> {
   setViewport: (viewport: CanvasViewport) => void
   undo: () => void
   redo: () => void
+  setTestStatus: (status: TestStatus) => void
+  setTestResults: (results: TestResult[] | null) => void
+  setExecutionSteps: (steps: ExecutionStep[] | null) => void
+  resetTest: () => void
 }
 
 const initialViewport: CanvasViewport = { x: 0, y: 0, zoom: 1 }
@@ -54,6 +62,9 @@ export const useCanvasStore = create<CanvasStoreState>()(
     nodes: [],
     edges: [],
     lastValidationError: null,
+    testStatus: 'idle' as TestStatus,
+    testResults: null,
+    executionSteps: null,
 
     setNodes: (nodesOrUpdater: Node[] | ((prev: Node[]) => Node[])) => {
       set((state) => {
@@ -382,6 +393,32 @@ export const useCanvasStore = create<CanvasStoreState>()(
         state.edges = nextState.edges
         state.canUndo = state.historyStack.length > 1
         state.canRedo = state.redoStack.length > 0
+      })
+    },
+
+    setTestStatus: (status: TestStatus) => {
+      set((state) => {
+        state.testStatus = status
+      })
+    },
+
+    setTestResults: (results: TestResult[] | null) => {
+      set((state) => {
+        state.testResults = results
+      })
+    },
+
+    setExecutionSteps: (steps: ExecutionStep[] | null) => {
+      set((state) => {
+        state.executionSteps = steps
+      })
+    },
+
+    resetTest: () => {
+      set((state) => {
+        state.testStatus = 'idle'
+        state.testResults = null
+        state.executionSteps = null
       })
     },
   }))

@@ -34,6 +34,14 @@ vi.mock('./LogicBlockNode', () => ({
   LogicBlockNode: () => <div data-testid="logic-block-node" />,
 }))
 
+vi.mock('./ExecutionProgressAnimation', () => ({
+  ExecutionProgressAnimation: () => <div data-testid="execution-progress-animation" />,
+}))
+
+vi.mock('@/components/challenge/TestResults', () => ({
+  TestResults: () => <div data-testid="test-results" />,
+}))
+
 vi.mock('@/hooks/use-canvas-keyboard', () => ({
   useCanvasKeyboard: () => ({ handleKeyDown: vi.fn() }),
 }))
@@ -56,6 +64,15 @@ vi.mock('sonner', () => ({
   },
 }))
 
+vi.mock('@/actions/challenge-actions', () => ({
+  submitSolution: vi.fn().mockResolvedValue({ success: true, data: { steps: [], results: [], summary: { total: 0, passed: 0, failed: 0, duration: 0 } } }),
+  validateAndSerializeFlow: vi.fn().mockResolvedValue({ success: true, data: [] }),
+}))
+
+vi.mock('@/lib/execution/serializer', () => ({
+  serializeCanvasState: vi.fn().mockReturnValue({ success: true, data: [] }),
+}))
+
 vi.mock('@/stores/canvas-store', () => {
   const state = {
     nodes: [],
@@ -74,6 +91,13 @@ vi.mock('@/stores/canvas-store', () => {
     removeBlocks: vi.fn(),
     pushHistory: vi.fn(),
     lastValidationError: null,
+    testStatus: 'idle' as const,
+    testResults: null,
+    executionSteps: null,
+    setTestStatus: vi.fn(),
+    setTestResults: vi.fn(),
+    setExecutionSteps: vi.fn(),
+    resetTest: vi.fn(),
   }
   return {
     useCanvasStore: (selector?: any) => selector ? selector(state) : state,

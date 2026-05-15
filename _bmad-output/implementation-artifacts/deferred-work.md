@@ -18,3 +18,8 @@
 - **[LOW] Return category renders empty with "0 items"** — Spec-defined design: `return` is a BlockType enum value but has no specific return blocks in vocabulary. May be intentional placeholder. [web/src/types/canvas-types.ts]
 - **[LOW] Bypasses useNodesState/useEdgesState** — Design decision to use store directly for node/edge state. Not a functional bug. [web/src/components/canvas/LogicBlockCanvas.tsx]
 - **[LOW] crypto.randomUUID() unavailable in non-secure contexts** — Pre-existing browser API compatibility concern. Falls over on HTTP and older browsers. [web/src/components/canvas/LogicBlockCanvas.tsx, web/src/stores/canvas-store.ts]
+
+## Deferred from: code review of 2-4-build-logic-block-execution-engine-test-runner (2026-05-15)
+
+- **[LOW] `abortRef` has no cleanup on unmount** — `abortRef` is checked before state mutations after the server action returns, but no `useEffect` cleanup sets it to false. Harmless since refs are collected with the component when unmounted. [web/src/components/canvas/CanvasToolbar.tsx]
+- **[LOW] No rate limit/timeout/input size guard on `submitSolution`** — Server action accepts arbitrary `SerializedBlockConfig[]` arrays with no upper bound, no `setTimeout`, no abort mechanism. Future story concern for input validation/sandboxing. [web/src/actions/challenge-actions.ts]

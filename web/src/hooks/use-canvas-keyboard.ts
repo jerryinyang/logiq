@@ -10,8 +10,8 @@ interface CanvasKeyboardHandlers {
 }
 
 export function useCanvasKeyboard({
-  onTest = () => console.log('Test'),
-  onReset = () => console.log('Reset'),
+  onTest = () => {},
+  onReset = () => {},
 }: UseCanvasKeyboardOptions = {}): CanvasKeyboardHandlers {
   const handleKeyDown = useCallback(
     (e: KeyboardEvent) => {

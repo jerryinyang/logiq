@@ -19,18 +19,39 @@ function LogicBlockNodeInner({ data, id, selected }: NodeProps<LogicBlockNodeTyp
   const block = data.block
   const Icon = CATEGORY_ICONS[block.type] ?? FALLBACK_ICON
 
+  const execState = (data as Record<string, unknown> & { executionState?: 'active' | 'success' | 'error' }).executionState
+
+  let outlineStyle: React.CSSProperties = selected
+    ? { outline: '2px solid #6366F1', outlineOffset: '2px' }
+    : { outline: '2px solid transparent', outlineOffset: '2px' }
+  let borderExtra = ''
+  let glowStyle: React.CSSProperties = {}
+
+  if (execState === 'active') {
+    outlineStyle = { outline: '2px solid #6366F1', outlineOffset: '2px' }
+    glowStyle = { boxShadow: '0 0 12px 2px rgba(99,102,241,0.4)' }
+    borderExtra = 'animate-pulse'
+  } else if (execState === 'success') {
+    outlineStyle = { outline: '2px solid #10B981', outlineOffset: '2px' }
+    glowStyle = { boxShadow: '0 0 10px 2px rgba(16,185,129,0.3)' }
+  } else if (execState === 'error') {
+    outlineStyle = { outline: '2px solid #F43F5E', outlineOffset: '2px' }
+    glowStyle = { boxShadow: '0 0 10px 2px rgba(244,63,94,0.3)' }
+    borderExtra = 'animate-shake'
+  }
+
   return (
     <ContextMenu>
       <ContextMenuTrigger asChild>
         <div
           data-nodeid={id}
           aria-label={`${block.category.label} — ${block.description}`}
-          className="group relative flex w-[220px] flex-col gap-1.5 rounded-lg border border-[#334155] bg-[#1E293B] p-3 shadow-md transition-[transform,outline-color] duration-150 hover:scale-[1.02]"
+          className={`group relative flex w-[220px] flex-col gap-1.5 rounded-lg border border-[#334155] bg-[#1E293B] p-3 shadow-md transition-[transform,outline-color] duration-150 hover:scale-[1.02] ${borderExtra}`}
           style={{
             borderLeftWidth: '4px',
             borderLeftColor: block.category.color,
-            outline: selected ? '2px solid #6366F1' : '2px solid transparent',
-            outlineOffset: '2px',
+            ...outlineStyle,
+            ...glowStyle,
           }}
         >
           <Handle
