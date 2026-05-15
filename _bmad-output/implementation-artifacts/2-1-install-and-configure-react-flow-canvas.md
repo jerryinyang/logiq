@@ -1,6 +1,6 @@
 # Story 2.1: Install and Configure React Flow Canvas
 
-Status: review
+Status: done
 
 <!-- Note: Validation is optional. Run validate-create-story for quality check before dev-story. -->
 
@@ -324,4 +324,4 @@ qwen3.6-plus
 - Initial implementation of React Flow canvas integration (Story 2.1)
 - All 9 tasks completed, 24 tests passing, build successful
 
-Status: review
+Status: done

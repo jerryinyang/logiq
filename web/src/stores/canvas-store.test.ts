@@ -22,6 +22,8 @@ const mockExecutionSteps: ExecutionStep[] = [
 
 describe('canvas-store', () => {
   beforeEach(() => {
+    const { historyManager } = useCanvasStore.getState()
+    historyManager.clear()
     useCanvasStore.setState({
       zoom: 1,
       viewport: { x: 0, y: 0, zoom: 1 },
@@ -40,6 +42,8 @@ describe('canvas-store', () => {
       currentStepIndex: -1,
       isPlaying: false,
       stepThroughActive: false,
+      draftStatus: 'none',
+      resetCount: 0,
     })
   })
 
@@ -51,6 +55,8 @@ describe('canvas-store', () => {
     expect(state.canRedo).toBe(false)
     expect(state.historyStack).toEqual([])
     expect(state.status).toBe('idle')
+    expect(state.draftStatus).toBe('none')
+    expect(state.resetCount).toBe(0)
   })
 
   it('sets zoom within bounds', () => {
@@ -87,14 +93,14 @@ describe('canvas-store', () => {
   })
 
   it('enables undo after multiple history entries', () => {
-    const { pushHistory, undo } = useCanvasStore.getState()
+    const { pushHistory } = useCanvasStore.getState()
     pushHistory(mockNodes, mockEdges)
     pushHistory([], [])
     const state = useCanvasStore.getState()
     expect(state.canUndo).toBe(true)
   })
 
-  it('undo reduces history stack', () => {
+  it('undo restores previous state', () => {
     const { pushHistory, undo } = useCanvasStore.getState()
     pushHistory(mockNodes, mockEdges)
     pushHistory([], [])
@@ -103,7 +109,7 @@ describe('canvas-store', () => {
     expect(state.canRedo).toBe(true)
   })
 
-  it('redo resets canRedo flag', () => {
+  it('redo restores state after undo', () => {
     const { pushHistory, undo, redo } = useCanvasStore.getState()
     pushHistory(mockNodes, mockEdges)
     pushHistory([], [])
@@ -286,6 +292,54 @@ describe('canvas-store', () => {
       expect(state.currentStepIndex).toBe(-1)
       expect(state.isPlaying).toBe(false)
       expect(state.stepThroughActive).toBe(false)
+    })
+  })
+
+  describe('resetCanvas', () => {
+    it('clears all canvas state', () => {
+      const { pushHistory, setNodes, setEdges } = useCanvasStore.getState()
+      pushHistory(mockNodes, mockEdges)
+      pushHistory([], [])
+      setNodes(mockNodes)
+      setEdges(mockEdges)
+
+      const { resetCanvas } = useCanvasStore.getState()
+      resetCanvas()
+
+      const state = useCanvasStore.getState()
+      expect(state.nodes).toEqual([])
+      expect(state.edges).toEqual([])
+      expect(state.selectedBlockIds).toEqual([])
+      expect(state.canUndo).toBe(false)
+      expect(state.canRedo).toBe(false)
+      expect(state.testStatus).toBe('idle')
+      expect(state.draftStatus).toBe('none')
+    })
+
+    it('increments resetCount', () => {
+      const { resetCanvas } = useCanvasStore.getState()
+      resetCanvas()
+      expect(useCanvasStore.getState().resetCount).toBe(1)
+      resetCanvas()
+      expect(useCanvasStore.getState().resetCount).toBe(2)
+    })
+  })
+
+  describe('draftStatus', () => {
+    it('initializes to none', () => {
+      expect(useCanvasStore.getState().draftStatus).toBe('none')
+    })
+
+    it('setDraftStatus updates state', () => {
+      const { setDraftStatus } = useCanvasStore.getState()
+      setDraftStatus('restoring')
+      expect(useCanvasStore.getState().draftStatus).toBe('restoring')
+
+      setDraftStatus('restored')
+      expect(useCanvasStore.getState().draftStatus).toBe('restored')
+
+      setDraftStatus('saved')
+      expect(useCanvasStore.getState().draftStatus).toBe('saved')
     })
   })
 })

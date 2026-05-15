@@ -18,7 +18,7 @@ const jetbrainsMono = JetBrains_Mono({
 })
 
 export const metadata: Metadata = {
-  title: 'LOGIQ',
+  title: 'Logiq',
   description: 'Interactive, visual, gamified learning platform for logical reasoning and DSA problem-solving',
 }
 

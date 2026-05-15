@@ -26,16 +26,24 @@ import { CanvasEmptyState } from './CanvasEmptyState'
 import { ExecutionProgressAnimation } from './ExecutionProgressAnimation'
 import { ExecutionOverlay } from './ExecutionOverlay'
 import { TestResults } from '@/components/challenge/TestResults'
+import { ResetConfirmDialog } from './ResetConfirmDialog'
+import { DraftSavedIndicator } from './DraftSavedIndicator'
+import { DraftExpiredDialog } from './DraftExpiredDialog'
 import { useCanvasKeyboard } from '@/hooks/use-canvas-keyboard'
 import { useCanvasAnnouncer } from '@/hooks/use-canvas-announcer'
 import { useCanvasStore } from '@/stores/canvas-store'
+import { useDraftRestore } from '@/hooks/use-draft-restore'
+import { useAutoSave } from '@/hooks/use-auto-save'
+import { clearDraft } from '@/lib/canvas/auto-save'
 import { BLOCK_LABELS } from '@/lib/canvas/block-validation'
 import { serializeCanvasState } from '@/lib/execution/serializer'
 import { submitSolution } from '@/actions/challenge-actions'
 import { applyExecutionHighlighting } from '@/lib/canvas/execution-highlighter'
 import { getExecutionPath, isAtFailurePoint } from '@/lib/execution/step-tracker'
+import { toast } from 'sonner'
 import type { BlockType } from '@/types/canvas-types'
 import type { BlockVocabularyEntry } from '@/lib/canvas/block-vocabulary'
+import { RotateCcw } from 'lucide-react'
 
 const nodeTypes: NodeTypes = {
   logicBlock: LogicBlockNode,
@@ -55,6 +63,9 @@ function CanvasContent({ challengeId }: { challengeId?: string }) {
   const setSelectedBlockIds = useCanvasStore((s) => s.setSelectedBlockIds)
   const pushHistory = useCanvasStore((s) => s.pushHistory)
   const validateConnection = useCanvasStore((s) => s.validateConnection)
+  const undo = useCanvasStore((s) => s.undo)
+  const redo = useCanvasStore((s) => s.redo)
+  const resetCanvas = useCanvasStore((s) => s.resetCanvas)
   const testStatus = useCanvasStore((s) => s.testStatus)
   const testResults = useCanvasStore((s) => s.testResults)
   const setTestStatus = useCanvasStore((s) => s.setTestStatus)
@@ -74,8 +85,36 @@ function CanvasContent({ challengeId }: { challengeId?: string }) {
 
   const [connectingFrom, setConnectingFrom] = useState<string | null>(null)
   const [validationError, setValidationError] = useState<string | null>(null)
+  const [resetDialogOpen, setResetDialogOpen] = useState(false)
   const prevStepIndexRef = useRef<number>(-1)
   const prevIsPlayingRef = useRef<boolean>(false)
+
+  const { restoredDraft, acceptExpiredDraft, declineExpiredDraft } = useDraftRestore(challengeId)
+  const { lastSavedAt } = useAutoSave(challengeId)
+
+  useEffect(() => {
+    if (restoredDraft && !restoredDraft.expired) {
+      toast('Draft restored', {
+        duration: 4000,
+        style: {
+          background: '#1E293B',
+          borderLeft: '3px solid #6366F1',
+        },
+      })
+    }
+  }, [restoredDraft])
+
+  const handleResetConfirm = useCallback(() => {
+    resetCanvas()
+    if (challengeId) {
+      clearDraft(challengeId)
+    }
+    setResetDialogOpen(false)
+  }, [resetCanvas, challengeId])
+
+  const handleReset = useCallback(() => {
+    setResetDialogOpen(true)
+  }, [])
 
   useEffect(() => {
     if (testStatus !== 'success' && testStatus !== 'error') return
@@ -200,6 +239,9 @@ function CanvasContent({ challengeId }: { challengeId?: string }) {
 
   useCanvasKeyboard({
     onTest: handleTestSubmission,
+    onReset: handleReset,
+    onUndo: undo,
+    onRedo: redo,
     stepThroughActive,
     onStepForward: nextStepAction,
     onStepBack: previousStepAction,
@@ -210,8 +252,11 @@ function CanvasContent({ challengeId }: { challengeId?: string }) {
     (changes) => {
       setNodes((nds: Node[]) => {
         const updated = applyNodeChanges(changes, nds)
-        const currentEdges = useCanvasStore.getState().edges
-        pushHistory(updated, currentEdges)
+        const isPositionOnly = changes.every((c) => c.type === 'position')
+        if (!isPositionOnly) {
+          const currentEdges = useCanvasStore.getState().edges
+          pushHistory(updated, currentEdges)
+        }
         return updated
       })
     },
@@ -404,7 +449,7 @@ function CanvasContent({ challengeId }: { challengeId?: string }) {
           size={1}
           color="#1E293B"
         />
-        <CanvasToolbar challengeId={challengeId} onTest={handleTestSubmission} validationError={validationError} />
+        <CanvasToolbar challengeId={challengeId} onTest={handleTestSubmission} validationError={validationError} onReset={handleReset} />
         {nodes.length === 0 && <CanvasEmptyState />}
         {stepThroughActive && <ExecutionOverlay />}
       </ReactFlow>
@@ -417,6 +462,17 @@ function CanvasContent({ challengeId }: { challengeId?: string }) {
           />
         </div>
       )}
+      <ResetConfirmDialog
+        open={resetDialogOpen}
+        onOpenChange={setResetDialogOpen}
+        onConfirm={handleResetConfirm}
+      />
+      <DraftExpiredDialog
+        open={restoredDraft?.expired ?? false}
+        onRestore={acceptExpiredDraft}
+        onStartFresh={declineExpiredDraft}
+      />
+      <DraftSavedIndicator lastSavedAt={lastSavedAt} />
     </div>
   )
 }

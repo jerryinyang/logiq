@@ -59,12 +59,12 @@ development_status:
   # Epic 2: Logic Block Canvas & Challenge Core (MVP)
   # ==============================
   epic-2: in-progress
-  2-1-install-and-configure-react-flow-canvas: review
+  2-1-install-and-configure-react-flow-canvas: done
   2-2-implement-block-palette-drag-to-canvas-interaction: done
-  2-3-implement-block-connection-real-time-validation: review
-  2-4-build-logic-block-execution-engine-test-runner: review
-  2-5-implement-step-through-execution-visualization: review
-  2-6-implement-iteration-canvas-state-persistence: ready-for-dev
+  2-3-implement-block-connection-real-time-validation: done
+  2-4-build-logic-block-execution-engine-test-runner: done
+  2-5-implement-step-through-execution-visualization: done
+  2-6-implement-iteration-canvas-state-persistence: done
   2-7-implement-edge-case-handling-blocks: ready-for-dev
   epic-2-retrospective: optional
 

@@ -1,6 +1,6 @@
 'use client'
 
-import { useCallback, useEffect } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { LogicBlockCanvas } from '@/components/canvas/LogicBlockCanvas'
 import { BlockPalette } from '@/components/canvas/BlockPalette'
 import { useCanvasStore } from '@/stores/canvas-store'
@@ -10,8 +10,13 @@ interface ChallengePageProps {
 }
 
 export default function ChallengePage({ params }: ChallengePageProps) {
+  const [challengeId, setChallengeId] = useState<string>('')
   const removeBlock = useCanvasStore((s) => s.removeBlock)
   const duplicateBlock = useCanvasStore((s) => s.duplicateBlock)
+
+  useEffect(() => {
+    params.then((p) => setChallengeId(p.id))
+  }, [params])
 
   const handleDeleteBlock = useCallback(
     (e: Event) => {
@@ -66,7 +71,7 @@ export default function ChallengePage({ params }: ChallengePageProps) {
         </aside>
 
         <main className="relative overflow-hidden">
-          <LogicBlockCanvas />
+          <LogicBlockCanvas challengeId={challengeId || undefined} />
         </main>
 
         <aside className="border-l border-border bg-card">

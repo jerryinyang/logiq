@@ -97,6 +97,16 @@ export interface HistoryEntry {
   edges: Edge[]
 }
 
+export type DraftStatus = 'none' | 'restoring' | 'restored' | 'saved'
+
+export interface DraftData {
+  nodes: Node[]
+  edges: Edge[]
+  savedAt: string
+  version: number
+  _expired?: true
+}
+
 export interface CanvasState {
   zoom: number
   viewport: CanvasViewport
@@ -105,4 +115,6 @@ export interface CanvasState {
   canRedo: boolean
   historyStack: HistoryEntry[]
   status: CanvasStatus
+  draftStatus: DraftStatus
+  resetCount: number
 }

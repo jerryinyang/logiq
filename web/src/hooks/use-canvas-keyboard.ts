@@ -3,6 +3,8 @@ import { useEffect, useCallback } from 'react'
 interface UseCanvasKeyboardOptions {
   onTest?: () => void
   onReset?: () => void
+  onUndo?: () => void
+  onRedo?: () => void
   stepThroughActive?: boolean
   onStepForward?: () => void
   onStepBack?: () => void
@@ -16,6 +18,8 @@ interface CanvasKeyboardHandlers {
 export function useCanvasKeyboard({
   onTest = () => {},
   onReset = () => {},
+  onUndo = () => {},
+  onRedo = () => {},
   stepThroughActive = false,
   onStepForward,
   onStepBack,
@@ -50,18 +54,38 @@ export function useCanvasKeyboard({
         return
       }
 
-      switch (e.key.toLowerCase()) {
-        case 't':
-          e.preventDefault()
-          onTest()
-          break
-        case 'r':
-          e.preventDefault()
-          onReset()
-          break
+      if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key.toLowerCase() === 'z') {
+        e.preventDefault()
+        onRedo()
+        return
+      }
+
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'z') {
+        e.preventDefault()
+        onUndo()
+        return
+      }
+
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'y') {
+        e.preventDefault()
+        onRedo()
+        return
+      }
+
+      if (!e.ctrlKey && !e.metaKey && !e.altKey) {
+        switch (e.key.toLowerCase()) {
+          case 't':
+            e.preventDefault()
+            onTest()
+            break
+          case 'r':
+            e.preventDefault()
+            onReset()
+            break
+        }
       }
     },
-    [onTest, onReset, stepThroughActive, onStepForward, onStepBack, onTogglePlay]
+    [onTest, onReset, onUndo, onRedo, stepThroughActive, onStepForward, onStepBack, onTogglePlay]
   )
 
   useEffect(() => {

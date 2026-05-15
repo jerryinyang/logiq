@@ -1,12 +1,11 @@
 import { create } from 'zustand'
 import { immer } from 'zustand/middleware/immer'
-import type { CanvasState, CanvasViewport, HistoryEntry, BlockType, BlockCategory, ConnectionValidationError } from '@/types/canvas-types'
+import type { CanvasState, CanvasViewport, BlockType, BlockCategory, ConnectionValidationError, DraftStatus } from '@/types/canvas-types'
 import type { TestStatus, TestResult, ExecutionStep } from '@/types/execution-types'
 import type { Node, Edge, XYPosition } from '@xyflow/react'
 import { isValidBlockConnection } from '@/lib/canvas/block-validation'
 import { wouldCreateCycle } from '@/lib/canvas/cycle-detection'
-
-const MAX_HISTORY = 50
+import { HistoryManager } from '@/lib/canvas/history-manager'
 
 interface ValidationResult {
   valid: boolean
@@ -19,14 +18,14 @@ interface CanvasStoreState extends Omit<CanvasState, 'viewport'> {
   nodes: Node[]
   edges: Edge[]
   lastValidationError: string | null
-  redoStack: HistoryEntry[]
+  redoStack: { timestamp: number; nodes: Node[]; edges: Edge[] }[]
   testStatus: TestStatus
   testResults: TestResult[] | null
   executionSteps: ExecutionStep[] | null
   currentStepIndex: number
   isPlaying: boolean
   stepThroughActive: boolean
-  pushHistory: (nodes: Node[], edges: Edge[]) => void
+  historyManager: HistoryManager
   setNodes: (nodesOrUpdater: Node[] | ((prev: Node[]) => Node[])) => void
   setEdges: (edgesOrUpdater: Edge[] | ((prev: Edge[]) => Edge[])) => void
   addBlock: (blockData: { id: string; type: BlockType; label: string; description: string; category: BlockCategory }, position: XYPosition) => void
@@ -42,6 +41,7 @@ interface CanvasStoreState extends Omit<CanvasState, 'viewport'> {
   setSelectedBlockIds: (ids: string[]) => void
   setZoom: (zoom: number) => void
   setViewport: (viewport: CanvasViewport) => void
+  pushHistory: (nodes: Node[], edges: Edge[]) => void
   undo: () => void
   redo: () => void
   setTestStatus: (status: TestStatus) => void
@@ -53,7 +53,11 @@ interface CanvasStoreState extends Omit<CanvasState, 'viewport'> {
   resetSteps: () => void
   setStepThroughActive: (active: boolean) => void
   resetTest: () => void
+  resetCanvas: () => void
+  setDraftStatus: (status: DraftStatus) => void
 }
+
+const historyManager = new HistoryManager(50)
 
 const initialViewport: CanvasViewport = { x: 0, y: 0, zoom: 1 }
 
@@ -76,6 +80,9 @@ export const useCanvasStore = create<CanvasStoreState>()(
     currentStepIndex: -1,
     isPlaying: false,
     stepThroughActive: false,
+    historyManager,
+    draftStatus: 'none' as DraftStatus,
+    resetCount: 0,
 
     setNodes: (nodesOrUpdater: Node[] | ((prev: Node[]) => Node[])) => {
       set((state) => {
@@ -95,24 +102,17 @@ export const useCanvasStore = create<CanvasStoreState>()(
 
     pushHistory: (nodes: Node[], edges: Edge[]) => {
       set((state) => {
-        const entry: HistoryEntry = {
-          timestamp: Date.now(),
-          nodes: JSON.parse(JSON.stringify(nodes)),
-          edges: JSON.parse(JSON.stringify(edges)),
-        }
-        state.historyStack.push(entry)
-        if (state.historyStack.length > MAX_HISTORY) {
-          state.historyStack = state.historyStack.slice(-MAX_HISTORY)
-        }
-        state.canUndo = state.historyStack.length > 1
-        state.canRedo = false
+        const mgr = state.historyManager
+        mgr.pushHistory(nodes, edges)
+        state.historyStack = mgr.getSnapshotList() as { timestamp: number; nodes: Node[]; edges: Edge[] }[]
+        state.canUndo = mgr.canUndo
+        state.canRedo = mgr.canRedo
       })
     },
 
     addBlock: (blockData, position: XYPosition) => {
-      const state = get()
-      const currentNodes = [...state.nodes]
-      const currentEdges = [...state.edges]
+      const currentNodes = [...get().nodes]
+      const currentEdges = [...get().edges]
 
       const snapPosition = {
         x: Math.round(position.x / 16) * 16,
@@ -136,66 +136,46 @@ export const useCanvasStore = create<CanvasStoreState>()(
       }
 
       set((state) => {
-        state.historyStack.push({
-          timestamp: Date.now(),
-          nodes: JSON.parse(JSON.stringify(currentNodes)),
-          edges: JSON.parse(JSON.stringify(currentEdges)),
-        })
-        if (state.historyStack.length > MAX_HISTORY) {
-          state.historyStack = state.historyStack.slice(-MAX_HISTORY)
-        }
+        const mgr = state.historyManager
+        mgr.pushHistory(currentNodes, currentEdges)
         state.nodes = [...currentNodes, newNode]
         state.edges = currentEdges
-        state.redoStack = []
-        state.canUndo = true
-        state.canRedo = false
+        state.historyStack = mgr.getSnapshotList() as { timestamp: number; nodes: Node[]; edges: Edge[] }[]
+        state.canUndo = mgr.canUndo
+        state.canRedo = mgr.canRedo
       })
     },
 
     removeBlock: (blockId: string) => {
-      const state = get()
-      const currentNodes = [...state.nodes]
-      const currentEdges = [...state.edges]
+      const currentNodes = [...get().nodes]
+      const currentEdges = [...get().edges]
 
       set((state) => {
-        state.historyStack.push({
-          timestamp: Date.now(),
-          nodes: JSON.parse(JSON.stringify(currentNodes)),
-          edges: JSON.parse(JSON.stringify(currentEdges)),
-        })
-        if (state.historyStack.length > MAX_HISTORY) {
-          state.historyStack = state.historyStack.slice(-MAX_HISTORY)
-        }
+        const mgr = state.historyManager
+        mgr.pushHistory(currentNodes, currentEdges)
         state.nodes = currentNodes.filter((n) => n.id !== blockId)
         state.edges = currentEdges.filter((e) => e.source !== blockId && e.target !== blockId)
         state.selectedBlockIds = state.selectedBlockIds.filter((id) => id !== blockId)
-        state.redoStack = []
-        state.canUndo = true
-        state.canRedo = false
+        state.historyStack = mgr.getSnapshotList() as { timestamp: number; nodes: Node[]; edges: Edge[] }[]
+        state.canUndo = mgr.canUndo
+        state.canRedo = mgr.canRedo
       })
     },
 
     removeBlocks: (blockIds: string[]) => {
-      const state = get()
-      const currentNodes = [...state.nodes]
-      const currentEdges = [...state.edges]
+      const currentNodes = [...get().nodes]
+      const currentEdges = [...get().edges]
       const idSet = new Set(blockIds)
 
       set((state) => {
-        state.historyStack.push({
-          timestamp: Date.now(),
-          nodes: JSON.parse(JSON.stringify(currentNodes)),
-          edges: JSON.parse(JSON.stringify(currentEdges)),
-        })
-        if (state.historyStack.length > MAX_HISTORY) {
-          state.historyStack = state.historyStack.slice(-MAX_HISTORY)
-        }
+        const mgr = state.historyManager
+        mgr.pushHistory(currentNodes, currentEdges)
         state.nodes = currentNodes.filter((n) => !idSet.has(n.id))
         state.edges = currentEdges.filter((e) => !idSet.has(e.source) && !idSet.has(e.target))
         state.selectedBlockIds = state.selectedBlockIds.filter((id) => !idSet.has(id))
-        state.redoStack = []
-        state.canUndo = true
-        state.canRedo = false
+        state.historyStack = mgr.getSnapshotList() as { timestamp: number; nodes: Node[]; edges: Edge[] }[]
+        state.canUndo = mgr.canUndo
+        state.canRedo = mgr.canRedo
       })
     },
 
@@ -231,19 +211,13 @@ export const useCanvasStore = create<CanvasStoreState>()(
       }
 
       set((state) => {
-        state.historyStack.push({
-          timestamp: Date.now(),
-          nodes: JSON.parse(JSON.stringify(currentNodes)),
-          edges: JSON.parse(JSON.stringify(currentEdges)),
-        })
-        if (state.historyStack.length > MAX_HISTORY) {
-          state.historyStack = state.historyStack.slice(-MAX_HISTORY)
-        }
+        const mgr = state.historyManager
+        mgr.pushHistory(currentNodes, currentEdges)
         state.nodes = [...currentNodes, newNode]
         state.edges = currentEdges
-        state.redoStack = []
-        state.canUndo = true
-        state.canRedo = false
+        state.historyStack = mgr.getSnapshotList() as { timestamp: number; nodes: Node[]; edges: Edge[] }[]
+        state.canUndo = mgr.canUndo
+        state.canRedo = mgr.canRedo
       })
     },
 
@@ -255,45 +229,31 @@ export const useCanvasStore = create<CanvasStoreState>()(
     },
 
     addEdge: (edge: Edge) => {
-      const state = get()
-      const currentNodes = [...state.nodes]
-      const currentEdges = [...state.edges]
+      const currentNodes = [...get().nodes]
+      const currentEdges = [...get().edges]
 
       set((state) => {
-        state.historyStack.push({
-          timestamp: Date.now(),
-          nodes: JSON.parse(JSON.stringify(currentNodes)),
-          edges: JSON.parse(JSON.stringify(currentEdges)),
-        })
-        if (state.historyStack.length > MAX_HISTORY) {
-          state.historyStack = state.historyStack.slice(-MAX_HISTORY)
-        }
+        const mgr = state.historyManager
+        mgr.pushHistory(currentNodes, currentEdges)
         state.edges = [...currentEdges, edge]
-        state.redoStack = []
-        state.canUndo = true
-        state.canRedo = false
+        state.historyStack = mgr.getSnapshotList() as { timestamp: number; nodes: Node[]; edges: Edge[] }[]
+        state.canUndo = mgr.canUndo
+        state.canRedo = mgr.canRedo
         state.lastValidationError = null
       })
     },
 
     removeEdge: (edgeId: string) => {
-      const state = get()
-      const currentNodes = [...state.nodes]
-      const currentEdges = [...state.edges]
+      const currentNodes = [...get().nodes]
+      const currentEdges = [...get().edges]
 
       set((state) => {
-        state.historyStack.push({
-          timestamp: Date.now(),
-          nodes: JSON.parse(JSON.stringify(currentNodes)),
-          edges: JSON.parse(JSON.stringify(currentEdges)),
-        })
-        if (state.historyStack.length > MAX_HISTORY) {
-          state.historyStack = state.historyStack.slice(-MAX_HISTORY)
-        }
+        const mgr = state.historyManager
+        mgr.pushHistory(currentNodes, currentEdges)
         state.edges = currentEdges.filter((e) => e.id !== edgeId)
-        state.redoStack = []
-        state.canUndo = true
-        state.canRedo = false
+        state.historyStack = mgr.getSnapshotList() as { timestamp: number; nodes: Node[]; edges: Edge[] }[]
+        state.canUndo = mgr.canUndo
+        state.canRedo = mgr.canRedo
       })
     },
 
@@ -372,38 +332,30 @@ export const useCanvasStore = create<CanvasStoreState>()(
     },
 
     undo: () => {
+      const mgr = get().historyManager
+      const result = mgr.undo()
+      if (!result) return
+
       set((state) => {
-        if (state.historyStack.length <= 1) return
-        const prevState = state.historyStack.pop()
-        if (!prevState) return
-        const currentEntry: HistoryEntry = {
-          timestamp: Date.now(),
-          nodes: JSON.parse(JSON.stringify(state.nodes)),
-          edges: JSON.parse(JSON.stringify(state.edges)),
-        }
-        state.redoStack.push(currentEntry)
-        state.nodes = prevState.nodes
-        state.edges = prevState.edges
-        state.canUndo = state.historyStack.length > 1
-        state.canRedo = true
+        state.nodes = JSON.parse(JSON.stringify(result.nodes))
+        state.edges = JSON.parse(JSON.stringify(result.edges))
+        state.historyStack = mgr.getSnapshotList() as { timestamp: number; nodes: Node[]; edges: Edge[] }[]
+        state.canUndo = mgr.canUndo
+        state.canRedo = mgr.canRedo
       })
     },
 
     redo: () => {
+      const mgr = get().historyManager
+      const result = mgr.redo()
+      if (!result) return
+
       set((state) => {
-        if (state.redoStack.length === 0) return
-        const nextState = state.redoStack.pop()
-        if (!nextState) return
-        const currentEntry: HistoryEntry = {
-          timestamp: Date.now(),
-          nodes: JSON.parse(JSON.stringify(state.nodes)),
-          edges: JSON.parse(JSON.stringify(state.edges)),
-        }
-        state.historyStack.push(currentEntry)
-        state.nodes = nextState.nodes
-        state.edges = nextState.edges
-        state.canUndo = state.historyStack.length > 1
-        state.canRedo = state.redoStack.length > 0
+        state.nodes = JSON.parse(JSON.stringify(result.nodes))
+        state.edges = JSON.parse(JSON.stringify(result.edges))
+        state.historyStack = mgr.getSnapshotList() as { timestamp: number; nodes: Node[]; edges: Edge[] }[]
+        state.canUndo = mgr.canUndo
+        state.canRedo = mgr.canRedo
       })
     },
 
@@ -478,6 +430,35 @@ export const useCanvasStore = create<CanvasStoreState>()(
         state.currentStepIndex = -1
         state.isPlaying = false
         state.stepThroughActive = false
+      })
+    },
+
+    resetCanvas: () => {
+      const mgr = get().historyManager
+      mgr.clear()
+      set((state) => {
+        state.nodes = []
+        state.edges = []
+        state.selectedBlockIds = []
+        state.canUndo = false
+        state.canRedo = false
+        state.historyStack = []
+        state.redoStack = []
+        state.lastValidationError = null
+        state.testStatus = 'idle'
+        state.testResults = null
+        state.executionSteps = null
+        state.currentStepIndex = -1
+        state.isPlaying = false
+        state.stepThroughActive = false
+        state.draftStatus = 'none'
+        state.resetCount += 1
+      })
+    },
+
+    setDraftStatus: (status: DraftStatus) => {
+      set((state) => {
+        state.draftStatus = status
       })
     },
   }))
