@@ -3,6 +3,10 @@ import { useEffect, useCallback } from 'react'
 interface UseCanvasKeyboardOptions {
   onTest?: () => void
   onReset?: () => void
+  stepThroughActive?: boolean
+  onStepForward?: () => void
+  onStepBack?: () => void
+  onTogglePlay?: () => void
 }
 
 interface CanvasKeyboardHandlers {
@@ -12,6 +16,10 @@ interface CanvasKeyboardHandlers {
 export function useCanvasKeyboard({
   onTest = () => {},
   onReset = () => {},
+  stepThroughActive = false,
+  onStepForward,
+  onStepBack,
+  onTogglePlay,
 }: UseCanvasKeyboardOptions = {}): CanvasKeyboardHandlers {
   const handleKeyDown = useCallback(
     (e: KeyboardEvent) => {
@@ -24,6 +32,24 @@ export function useCanvasKeyboard({
 
       if (isInput) return
 
+      if (stepThroughActive) {
+        switch (e.key) {
+          case 'ArrowRight':
+            e.preventDefault()
+            onStepForward?.()
+            break
+          case 'ArrowLeft':
+            e.preventDefault()
+            onStepBack?.()
+            break
+          case ' ':
+            e.preventDefault()
+            onTogglePlay?.()
+            break
+        }
+        return
+      }
+
       switch (e.key.toLowerCase()) {
         case 't':
           e.preventDefault()
@@ -35,7 +61,7 @@ export function useCanvasKeyboard({
           break
       }
     },
-    [onTest, onReset]
+    [onTest, onReset, stepThroughActive, onStepForward, onStepBack, onTogglePlay]
   )
 
   useEffect(() => {

@@ -63,7 +63,7 @@ development_status:
   2-2-implement-block-palette-drag-to-canvas-interaction: done
   2-3-implement-block-connection-real-time-validation: review
   2-4-build-logic-block-execution-engine-test-runner: review
-  2-5-implement-step-through-execution-visualization: ready-for-dev
+  2-5-implement-step-through-execution-visualization: review
   2-6-implement-iteration-canvas-state-persistence: ready-for-dev
   2-7-implement-edge-case-handling-blocks: ready-for-dev
   epic-2-retrospective: optional

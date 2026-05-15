@@ -37,6 +37,9 @@ describe('canvas-store', () => {
       testStatus: 'idle',
       testResults: null,
       executionSteps: null,
+      currentStepIndex: -1,
+      isPlaying: false,
+      stepThroughActive: false,
     })
   })
 
@@ -178,6 +181,111 @@ describe('canvas-store', () => {
 
       setExecutionSteps(null)
       expect(useCanvasStore.getState().executionSteps).toBeNull()
+    })
+  })
+
+  describe('step-through state management', () => {
+    it('starts with step-through inactive', () => {
+      const state = useCanvasStore.getState()
+      expect(state.currentStepIndex).toBe(-1)
+      expect(state.isPlaying).toBe(false)
+      expect(state.stepThroughActive).toBe(false)
+    })
+
+    it('nextStep advances current step index', () => {
+      useCanvasStore.setState({ executionSteps: mockExecutionSteps, currentStepIndex: 0 })
+      const { nextStep } = useCanvasStore.getState()
+      nextStep()
+      expect(useCanvasStore.getState().currentStepIndex).toBe(1)
+    })
+
+    it('nextStep does not advance past last step', () => {
+      useCanvasStore.setState({ executionSteps: mockExecutionSteps, currentStepIndex: 1 })
+      const { nextStep } = useCanvasStore.getState()
+      nextStep()
+      expect(useCanvasStore.getState().currentStepIndex).toBe(1)
+    })
+
+    it('previousStep decreases current step index', () => {
+      useCanvasStore.setState({ executionSteps: mockExecutionSteps, currentStepIndex: 1 })
+      const { previousStep } = useCanvasStore.getState()
+      previousStep()
+      expect(useCanvasStore.getState().currentStepIndex).toBe(0)
+    })
+
+    it('previousStep does not decrease below 0', () => {
+      useCanvasStore.setState({ executionSteps: mockExecutionSteps, currentStepIndex: 0 })
+      const { previousStep } = useCanvasStore.getState()
+      previousStep()
+      expect(useCanvasStore.getState().currentStepIndex).toBe(0)
+    })
+
+    it('togglePlay toggles isPlaying', () => {
+      const { togglePlay } = useCanvasStore.getState()
+      togglePlay()
+      expect(useCanvasStore.getState().isPlaying).toBe(true)
+      togglePlay()
+      expect(useCanvasStore.getState().isPlaying).toBe(false)
+    })
+
+    it('resetSteps resets to initial step and stops playing', () => {
+      useCanvasStore.setState({ executionSteps: mockExecutionSteps, currentStepIndex: 1, isPlaying: true })
+      const { resetSteps } = useCanvasStore.getState()
+      resetSteps()
+      expect(useCanvasStore.getState().currentStepIndex).toBe(0)
+      expect(useCanvasStore.getState().isPlaying).toBe(false)
+    })
+
+    it('resetSteps sets currentStepIndex to -1 when no steps', () => {
+      useCanvasStore.setState({ executionSteps: null, currentStepIndex: 2 })
+      const { resetSteps } = useCanvasStore.getState()
+      resetSteps()
+      expect(useCanvasStore.getState().currentStepIndex).toBe(-1)
+    })
+
+    it('setStepThroughActive activates and resets step index', () => {
+      useCanvasStore.setState({ executionSteps: mockExecutionSteps })
+      const { setStepThroughActive } = useCanvasStore.getState()
+      setStepThroughActive(true)
+      expect(useCanvasStore.getState().stepThroughActive).toBe(true)
+      expect(useCanvasStore.getState().currentStepIndex).toBe(0)
+      expect(useCanvasStore.getState().isPlaying).toBe(false)
+    })
+
+    it('setStepThroughActive deactivates and stops playing', () => {
+      useCanvasStore.setState({ isPlaying: true, stepThroughActive: true })
+      const { setStepThroughActive } = useCanvasStore.getState()
+      setStepThroughActive(false)
+      expect(useCanvasStore.getState().stepThroughActive).toBe(false)
+      expect(useCanvasStore.getState().isPlaying).toBe(false)
+    })
+
+    it('setExecutionSteps resets step index and stops playing', () => {
+      useCanvasStore.setState({ currentStepIndex: 3, isPlaying: true })
+      const { setExecutionSteps } = useCanvasStore.getState()
+      setExecutionSteps(mockExecutionSteps)
+      expect(useCanvasStore.getState().currentStepIndex).toBe(0)
+      expect(useCanvasStore.getState().isPlaying).toBe(false)
+    })
+
+    it('resetTest resets all step-through state', () => {
+      useCanvasStore.setState({
+        testStatus: 'error',
+        testResults: mockTestResults,
+        executionSteps: mockExecutionSteps,
+        currentStepIndex: 1,
+        isPlaying: true,
+        stepThroughActive: true,
+      })
+      const { resetTest } = useCanvasStore.getState()
+      resetTest()
+      const state = useCanvasStore.getState()
+      expect(state.testStatus).toBe('idle')
+      expect(state.testResults).toBeNull()
+      expect(state.executionSteps).toBeNull()
+      expect(state.currentStepIndex).toBe(-1)
+      expect(state.isPlaying).toBe(false)
+      expect(state.stepThroughActive).toBe(false)
     })
   })
 })

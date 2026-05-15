@@ -1,11 +1,12 @@
 'use client'
 
 import { motion, AnimatePresence } from 'framer-motion'
-import { CheckCircle2, XCircle, X } from 'lucide-react'
+import { CheckCircle2, XCircle, X, Eye } from 'lucide-react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion'
 import type { TestResult } from '@/types/execution-types'
+import { useCanvasStore } from '@/stores/canvas-store'
 
 interface TestResultsProps {
   results: TestResult[]
@@ -25,6 +26,7 @@ export function TestResults({ results, onClose }: TestResultsProps) {
   const passedCount = results.filter((r) => r.passed).length
   const failedCount = results.length - passedCount
   const allPassed = failedCount === 0
+  const setStepThroughActive = useCanvasStore((s) => s.setStepThroughActive)
 
   return (
     <AnimatePresence>
@@ -73,6 +75,16 @@ export function TestResults({ results, onClose }: TestResultsProps) {
                   </>
                 )}
               </div>
+              {!allPassed && (
+                <button
+                  onClick={() => { setStepThroughActive(true) }}
+                  className="flex items-center gap-1.5 rounded-md bg-indigo-600 px-2.5 py-1 text-xs font-medium text-white hover:bg-indigo-700 transition-colors"
+                  aria-label="Step through failure"
+                >
+                  <Eye className="h-3.5 w-3.5" />
+                  Step Through
+                </button>
+              )}
               <button
                 onClick={onClose}
                 className="rounded-md p-1 text-slate-400 hover:bg-slate-700 hover:text-white transition-colors"

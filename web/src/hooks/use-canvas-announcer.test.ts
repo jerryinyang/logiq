@@ -2,6 +2,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { renderHook, act } from '@testing-library/react'
 import { useCanvasAnnouncer } from './use-canvas-announcer'
 import { useCanvasStore } from '@/stores/canvas-store'
+import type { BlockType } from '@/types/canvas-types'
 
 describe('useCanvasAnnouncer', () => {
   beforeEach(() => {
@@ -68,5 +69,59 @@ describe('useCanvasAnnouncer', () => {
     expect(announcer?.textContent).toContain('Connected flow')
     expect(announcer?.textContent).toContain('Loop')
     expect(announcer?.textContent).toContain('Condition')
+  })
+
+  it('announceStep announces step with status', () => {
+    const { result } = renderHook(() => useCanvasAnnouncer())
+    const step = { stepIndex: 2, blockId: 'b1', blockType: 'comparison' as BlockType, input: 5, output: true, status: 'success' as const, duration: 1 }
+    act(() => {
+      result.current.announceStep(2, step)
+    })
+    const announcer = document.getElementById('logiq-canvas-announcer')
+    expect(announcer?.textContent).toContain('Step 3')
+    expect(announcer?.textContent).toContain('Comparison')
+    expect(announcer?.textContent).toContain('passed')
+  })
+
+  it('announceStepFailure announces failure with error message', () => {
+    const { result } = renderHook(() => useCanvasAnnouncer())
+    const step = { stepIndex: 3, blockId: 'b1', blockType: 'return' as BlockType, input: 5, output: false, status: 'error' as const, duration: 1, errorMessage: 'Expected true, got false' }
+    act(() => {
+      result.current.announceStepFailure(3, step)
+    })
+    const announcer = document.getElementById('logiq-canvas-announcer')
+    expect(announcer?.textContent).toContain('Step 4')
+    expect(announcer?.textContent).toContain('failed')
+    expect(announcer?.textContent).toContain('Expected true, got false')
+  })
+
+  it('announceStepSuccess announces success step', () => {
+    const { result } = renderHook(() => useCanvasAnnouncer())
+    const step = { stepIndex: 0, blockId: 'b1', blockType: 'variable' as BlockType, input: null, output: 5, status: 'success' as const, duration: 1 }
+    act(() => {
+      result.current.announceStepSuccess(0, step)
+    })
+    const announcer = document.getElementById('logiq-canvas-announcer')
+    expect(announcer?.textContent).toContain('Step 1')
+    expect(announcer?.textContent).toContain('Variable')
+    expect(announcer?.textContent).toContain('passed')
+  })
+
+  it('announceAutoPlayStart announces auto-play start', () => {
+    const { result } = renderHook(() => useCanvasAnnouncer())
+    act(() => {
+      result.current.announceAutoPlayStart()
+    })
+    const announcer = document.getElementById('logiq-canvas-announcer')
+    expect(announcer?.textContent).toContain('Auto-playing execution steps')
+  })
+
+  it('announcePause announces pause at step', () => {
+    const { result } = renderHook(() => useCanvasAnnouncer())
+    act(() => {
+      result.current.announcePause(5)
+    })
+    const announcer = document.getElementById('logiq-canvas-announcer')
+    expect(announcer?.textContent).toContain('Execution paused at step 6')
   })
 })

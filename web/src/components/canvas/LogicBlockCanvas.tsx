@@ -1,6 +1,6 @@
 'use client'
 
-import { useCallback, useState, useMemo, useEffect } from 'react'
+import { useCallback, useState, useMemo, useEffect, useRef } from 'react'
 import {
   ReactFlow,
   ReactFlowProvider,
@@ -24,6 +24,7 @@ import { BlockConnection } from './BlockConnection'
 import { CanvasToolbar } from './CanvasToolbar'
 import { CanvasEmptyState } from './CanvasEmptyState'
 import { ExecutionProgressAnimation } from './ExecutionProgressAnimation'
+import { ExecutionOverlay } from './ExecutionOverlay'
 import { TestResults } from '@/components/challenge/TestResults'
 import { useCanvasKeyboard } from '@/hooks/use-canvas-keyboard'
 import { useCanvasAnnouncer } from '@/hooks/use-canvas-announcer'
@@ -31,6 +32,8 @@ import { useCanvasStore } from '@/stores/canvas-store'
 import { BLOCK_LABELS } from '@/lib/canvas/block-validation'
 import { serializeCanvasState } from '@/lib/execution/serializer'
 import { submitSolution } from '@/actions/challenge-actions'
+import { applyExecutionHighlighting } from '@/lib/canvas/execution-highlighter'
+import { getExecutionPath, isAtFailurePoint } from '@/lib/execution/step-tracker'
 import type { BlockType } from '@/types/canvas-types'
 import type { BlockVocabularyEntry } from '@/lib/canvas/block-vocabulary'
 
@@ -59,11 +62,20 @@ function CanvasContent({ challengeId }: { challengeId?: string }) {
   const setExecutionSteps = useCanvasStore((s) => s.setExecutionSteps)
   const executionSteps = useCanvasStore((s) => s.executionSteps)
   const resetTest = useCanvasStore((s) => s.resetTest)
+  const currentStepIndex = useCanvasStore((s) => s.currentStepIndex)
+  const stepThroughActive = useCanvasStore((s) => s.stepThroughActive)
+  const isPlaying = useCanvasStore((s) => s.isPlaying)
+  const nextStepAction = useCanvasStore((s) => s.nextStep)
+  const previousStepAction = useCanvasStore((s) => s.previousStep)
+  const togglePlayAction = useCanvasStore((s) => s.togglePlay)
+  const setStepThroughActive = useCanvasStore((s) => s.setStepThroughActive)
   const { screenToFlowPosition } = useReactFlow()
-  const { announceConnection, announceRejection } = useCanvasAnnouncer()
+  const { announceConnection, announceRejection, announceStep, announceAutoPlayStart, announcePause } = useCanvasAnnouncer()
 
   const [connectingFrom, setConnectingFrom] = useState<string | null>(null)
   const [validationError, setValidationError] = useState<string | null>(null)
+  const prevStepIndexRef = useRef<number>(-1)
+  const prevIsPlayingRef = useRef<boolean>(false)
 
   useEffect(() => {
     if (testStatus !== 'success' && testStatus !== 'error') return
@@ -83,6 +95,64 @@ function CanvasContent({ challengeId }: { challengeId?: string }) {
       })
     )
   }, [testStatus, executionSteps, setNodes])
+
+  useEffect(() => {
+    if (!stepThroughActive || !executionSteps || executionSteps.length === 0) return
+
+    const pathInfo = getExecutionPath(executionSteps)
+    const failureIndex = pathInfo?.failureIndex ?? null
+
+    if (currentStepIndex >= 0 && currentStepIndex < executionSteps.length) {
+      const step = executionSteps[currentStepIndex]
+      const atFailure = isAtFailurePoint(currentStepIndex, failureIndex)
+
+      if (atFailure) {
+        announceStepFailure(currentStepIndex, step)
+      } else {
+        announceStepSuccess(currentStepIndex, step)
+      }
+    }
+  }, [stepThroughActive, currentStepIndex, executionSteps])
+
+  useEffect(() => {
+    if (isPlaying && !prevIsPlayingRef.current) {
+      announceAutoPlayStart()
+    } else if (!isPlaying && prevIsPlayingRef.current && stepThroughActive) {
+      announcePause(currentStepIndex)
+    }
+    prevIsPlayingRef.current = isPlaying
+  }, [isPlaying, stepThroughActive, currentStepIndex])
+
+  const announceStepSuccess = useCallback((index: number, step: { blockType: string }) => {
+    const region = document.getElementById('logiq-canvas-step-announcer')
+    if (region) {
+      const label = BLOCK_LABELS[step.blockType as keyof typeof BLOCK_LABELS] ?? step.blockType
+      region.textContent = `Step ${index + 1}: ${label} — passed`
+    }
+  }, [])
+
+  const announceStepFailure = useCallback((index: number, step: { blockType: string; errorMessage?: string }) => {
+    const region = document.getElementById('logiq-canvas-step-announcer')
+    if (region) {
+      const label = BLOCK_LABELS[step.blockType as keyof typeof BLOCK_LABELS] ?? step.blockType
+      const errorPart = step.errorMessage ? `. ${step.errorMessage}` : ''
+      region.textContent = `Step ${index + 1}: ${label} — failed${errorPart}`
+    }
+  }, [])
+
+  const highlightedState = useMemo(() => {
+    if (!stepThroughActive || !executionSteps || currentStepIndex < 0) {
+      return { nodes, edges }
+    }
+    const pathInfo = getExecutionPath(executionSteps)
+    return applyExecutionHighlighting(
+      nodes,
+      edges,
+      executionSteps,
+      currentStepIndex,
+      pathInfo?.failureIndex ?? null
+    )
+  }, [nodes, edges, stepThroughActive, executionSteps, currentStepIndex])
 
   const handleTestSubmission = useCallback(async () => {
     const currentStatus = useCanvasStore.getState().testStatus
@@ -130,6 +200,10 @@ function CanvasContent({ challengeId }: { challengeId?: string }) {
 
   useCanvasKeyboard({
     onTest: handleTestSubmission,
+    stepThroughActive,
+    onStepForward: nextStepAction,
+    onStepBack: previousStepAction,
+    onTogglePlay: togglePlayAction,
   })
 
   const onNodesChange: OnNodesChange = useCallback(
@@ -292,9 +366,15 @@ function CanvasContent({ challengeId }: { challengeId?: string }) {
         aria-atomic="true"
         className="sr-only"
       />
+      <div
+        id="logiq-canvas-step-announcer"
+        aria-live="assertive"
+        aria-atomic="true"
+        className="sr-only"
+      />
       <ReactFlow
-        nodes={nodes}
-        edges={edges}
+        nodes={highlightedState.nodes}
+        edges={highlightedState.edges}
         nodeTypes={nodeTypes}
         edgeTypes={edgeTypes}
         onNodesChange={onNodesChange}
@@ -326,6 +406,7 @@ function CanvasContent({ challengeId }: { challengeId?: string }) {
         />
         <CanvasToolbar challengeId={challengeId} onTest={handleTestSubmission} validationError={validationError} />
         {nodes.length === 0 && <CanvasEmptyState />}
+        {stepThroughActive && <ExecutionOverlay />}
       </ReactFlow>
       <ExecutionProgressAnimation challengeId={challengeId} />
       {testResults && (testStatus === 'success' || testStatus === 'error') && (

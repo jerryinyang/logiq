@@ -23,6 +23,9 @@ interface CanvasStoreState extends Omit<CanvasState, 'viewport'> {
   testStatus: TestStatus
   testResults: TestResult[] | null
   executionSteps: ExecutionStep[] | null
+  currentStepIndex: number
+  isPlaying: boolean
+  stepThroughActive: boolean
   pushHistory: (nodes: Node[], edges: Edge[]) => void
   setNodes: (nodesOrUpdater: Node[] | ((prev: Node[]) => Node[])) => void
   setEdges: (edgesOrUpdater: Edge[] | ((prev: Edge[]) => Edge[])) => void
@@ -44,6 +47,11 @@ interface CanvasStoreState extends Omit<CanvasState, 'viewport'> {
   setTestStatus: (status: TestStatus) => void
   setTestResults: (results: TestResult[] | null) => void
   setExecutionSteps: (steps: ExecutionStep[] | null) => void
+  nextStep: () => void
+  previousStep: () => void
+  togglePlay: () => void
+  resetSteps: () => void
+  setStepThroughActive: (active: boolean) => void
   resetTest: () => void
 }
 
@@ -65,6 +73,9 @@ export const useCanvasStore = create<CanvasStoreState>()(
     testStatus: 'idle' as TestStatus,
     testResults: null,
     executionSteps: null,
+    currentStepIndex: -1,
+    isPlaying: false,
+    stepThroughActive: false,
 
     setNodes: (nodesOrUpdater: Node[] | ((prev: Node[]) => Node[])) => {
       set((state) => {
@@ -411,6 +422,51 @@ export const useCanvasStore = create<CanvasStoreState>()(
     setExecutionSteps: (steps: ExecutionStep[] | null) => {
       set((state) => {
         state.executionSteps = steps
+        state.currentStepIndex = steps && steps.length > 0 ? 0 : -1
+        state.isPlaying = false
+      })
+    },
+
+    nextStep: () => {
+      set((state) => {
+        if (!state.executionSteps) return
+        const maxIndex = state.executionSteps.length - 1
+        if (state.currentStepIndex < maxIndex) {
+          state.currentStepIndex += 1
+        }
+      })
+    },
+
+    previousStep: () => {
+      set((state) => {
+        if (state.currentStepIndex > 0) {
+          state.currentStepIndex -= 1
+        }
+      })
+    },
+
+    togglePlay: () => {
+      set((state) => {
+        state.isPlaying = !state.isPlaying
+      })
+    },
+
+    resetSteps: () => {
+      set((state) => {
+        state.currentStepIndex = state.executionSteps && state.executionSteps.length > 0 ? 0 : -1
+        state.isPlaying = false
+      })
+    },
+
+    setStepThroughActive: (active: boolean) => {
+      set((state) => {
+        state.stepThroughActive = active
+        if (active) {
+          state.currentStepIndex = state.executionSteps && state.executionSteps.length > 0 ? 0 : -1
+          state.isPlaying = false
+        } else {
+          state.isPlaying = false
+        }
       })
     },
 
@@ -419,6 +475,9 @@ export const useCanvasStore = create<CanvasStoreState>()(
         state.testStatus = 'idle'
         state.testResults = null
         state.executionSteps = null
+        state.currentStepIndex = -1
+        state.isPlaying = false
+        state.stepThroughActive = false
       })
     },
   }))

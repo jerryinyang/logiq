@@ -3,6 +3,7 @@
 import { useCallback } from 'react'
 import { useCanvasStore } from '@/stores/canvas-store'
 import { BLOCK_LABELS } from '@/lib/canvas/block-validation'
+import type { ExecutionStep } from '@/types/execution-types'
 
 export function useCanvasAnnouncer() {
   const announce = useCallback((message: string) => {
@@ -86,6 +87,44 @@ export function useCanvasAnnouncer() {
     }
   }, [announce])
 
+  const announceStep = useCallback(
+    (stepIndex: number, step: ExecutionStep) => {
+      const blockLabel = BLOCK_LABELS[step.blockType as keyof typeof BLOCK_LABELS] ?? step.blockType
+      const statusText = step.status === 'error' ? 'failed' : step.status === 'success' ? 'passed' : 'executing'
+      const errorPart = step.status === 'error' && step.errorMessage ? `. ${step.errorMessage}` : ''
+      announce(`Step ${stepIndex + 1}: ${blockLabel} — ${statusText}${errorPart}`)
+    },
+    [announce]
+  )
+
+  const announceStepSuccess = useCallback(
+    (stepIndex: number, step: ExecutionStep) => {
+      const blockLabel = BLOCK_LABELS[step.blockType as keyof typeof BLOCK_LABELS] ?? step.blockType
+      announce(`Step ${stepIndex + 1}: ${blockLabel} — passed`)
+    },
+    [announce]
+  )
+
+  const announceStepFailure = useCallback(
+    (stepIndex: number, step: ExecutionStep) => {
+      const blockLabel = BLOCK_LABELS[step.blockType as keyof typeof BLOCK_LABELS] ?? step.blockType
+      const errorPart = step.errorMessage ? `. ${step.errorMessage}` : ''
+      announce(`Step ${stepIndex + 1}: ${blockLabel} — failed${errorPart}`)
+    },
+    [announce]
+  )
+
+  const announceAutoPlayStart = useCallback(() => {
+    announce('Auto-playing execution steps')
+  }, [announce])
+
+  const announcePause = useCallback(
+    (stepIndex: number) => {
+      announce(`Execution paused at step ${stepIndex + 1}`)
+    },
+    [announce]
+  )
+
   return {
     announce,
     announceConnection,
@@ -93,5 +132,10 @@ export function useCanvasAnnouncer() {
     announceCycleRejection,
     announceDirectionError,
     announceFlow,
+    announceStep,
+    announceStepSuccess,
+    announceStepFailure,
+    announceAutoPlayStart,
+    announcePause,
   }
 }

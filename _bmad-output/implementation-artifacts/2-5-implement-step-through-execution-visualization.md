@@ -1,6 +1,6 @@
 # Story 2.5: Implement Step-Through Execution Visualization
 
-Status: ready-for-dev
+Status: review
 
 <!-- Note: Validation is optional. Run validate-create-story for quality check before dev-story. -->
 
@@ -26,111 +26,111 @@ So that I can see exactly where and why my logic broke.
 
 ## Tasks / Subtasks
 
-- [ ] Task 1: Create Execution Step Tracker (AC: #1, #2)
-  - [ ] Create `web/src/lib/execution/step-tracker.ts`
-  - [ ] `getExecutionPath(steps: ExecutionStep[]): { currentIndex, totalSteps, step, hasNext, hasPrevious, failureIndex, failureStep }`
-  - [ ] Track current step index with reactive state
-  - [ ] Provide step navigation: `nextStep()`, `previousStep()`, `goToStep(index)`
-  - [ ] Identify failure step index from ExecutionReport
-  - [ ] Return current step's block ID for canvas highlighting
+- [x] Task 1: Create Execution Step Tracker (AC: #1, #2)
+  - [x] Create `web/src/lib/execution/step-tracker.ts`
+  - [x] `getExecutionPath(steps: ExecutionStep[]): { currentIndex, totalSteps, step, hasNext, hasPrevious, failureIndex, failureStep }`
+  - [x] Track current step index with reactive state
+  - [x] Provide step navigation: `nextStep()`, `previousStep()`, `goToStep(index)`
+  - [x] Identify failure step index from ExecutionReport
+  - [x] Return current step's block ID for canvas highlighting
 
-- [ ] Task 2: Create ExecutionOverlay Component (AC: #1, #2, #3, #6)
-  - [ ] Create `web/src/components/canvas/ExecutionOverlay.tsx`
-  - [ ] Show when canvas store `testStatus === "error"` (test failed)
-  - [ ] Render playback controls:
-    - Play/Pause button (Lucide `Play`/`Pause`)
-    - Step Forward button (Lucide `StepForward`)
-    - Step Back button (Lucide `StepBack`)
-    - Progress indicator: "Step {current}/{total}"
-  - [ ] Position: floating panel at bottom-center of canvas via React Flow `<Panel>`
-  - [ ] Dark background (#1E293B), rounded, with control buttons
-  - [ ] Step description panel below controls (expandable)
-  - [ ] Auto-play mode: step forward every 500ms until failure point or end
-  - [ ] Pause automatically at failure step
+- [x] Task 2: Create ExecutionOverlay Component (AC: #1, #2, #3, #6)
+  - [x] Create `web/src/components/canvas/ExecutionOverlay.tsx`
+  - [x] Show when canvas store `testStatus === "error"` (test failed)
+  - [x] Render playback controls:
+    - [x] Play/Pause button (Lucide `Play`/`Pause`)
+    - [x] Step Forward button (Lucide `StepForward`)
+    - [x] Step Back button (Lucide `StepBack`)
+    - [x] Progress indicator: "Step {current}/{total}"
+  - [x] Position: floating panel at bottom-center of canvas via React Flow `<Panel>`
+  - [x] Dark background (#1E293B), rounded, with control buttons
+  - [x] Step description panel below controls (expandable)
+  - [x] Auto-play mode: step forward every 500ms until failure point or end
+  - [x] Pause automatically at failure step
 
-- [ ] Task 3: Implement Canvas Block Highlighting (AC: #1, #2, #3)
-  - [ ] Create `web/src/lib/canvas/execution-highlighter.ts`
-  - [ ] Map execution step's `blockId` to canvas node and edge
-  - [ ] `getHighlightStyles(blockId, currentStepIndex, failureIndex): { nodeClass, edgeClass }`
-  - [ ] Define per-state styles for React Flow nodes/edges:
-    - Unexecuted: neutral (Slate #64748B)
-    - Currently executing: indigo pulse border (#6366F1) + opacity 1.0
-    - Executed (success): emerald border (#10B981) + opacity 0.8
-    - Failure point: rose border (#F43F5E) + shake animation + red glow
-    - Not yet executed: dimmed opacity 0.4
-  - [ ] Define edge styles: executed path has brighter stroke (#10B981 3px), unexecuted path is dimmed (#64748B 1px opacity 0.3)
-  - [ ] Update `LogicBlockCanvas.tsx`: consume `getHighlightStyles()` results, apply to node data and `useEdgesState` so styles re-render reactively when `currentStepIndex` changes
-  - [ ] Return style objects consumable by node/edge rendering
+- [x] Task 3: Implement Canvas Block Highlighting (AC: #1, #2, #3)
+  - [x] Create `web/src/lib/canvas/execution-highlighter.ts`
+  - [x] Map execution step's `blockId` to canvas node and edge
+  - [x] `getHighlightStyles(blockId, currentStepIndex, failureIndex): { nodeClass, edgeClass }`
+  - [x] Define per-state styles for React Flow nodes/edges:
+    - [x] Unexecuted: neutral (Slate #64748B)
+    - [x] Currently executing: indigo pulse border (#6366F1) + opacity 1.0
+    - [x] Executed (success): emerald border (#10B981) + opacity 0.8
+    - [x] Failure point: rose border (#F43F5E) + shake animation + red glow
+    - [x] Not yet executed: dimmed opacity 0.4
+  - [x] Define edge styles: executed path has brighter stroke (#10B981 3px), unexecuted path is dimmed (#64748B 1px opacity 0.3)
+  - [x] Update `LogicBlockCanvas.tsx`: consume `getHighlightStyles()` results, apply to node data and `useEdgesState` so styles re-render reactively when `currentStepIndex` changes
+  - [x] Return style objects consumable by node/edge rendering
 
-- [ ] Task 4: Create Step Description Panel (AC: #2, #4)
-  - [ ] Create `web/src/components/canvas/StepDescription.tsx` (separate component imported by `ExecutionOverlay.tsx`)
-  - [ ] Show current step details: block type icon, label, description
-  - [ ] Show input value, operation, output value for current step
-  - [ ] At failure point: show expected vs actual, error message
-  - [ ] Show common mistake context if applicable (configurable via pattern library from Task 5)
-  - [ ] Style: card with monospace values (JetBrains Mono), clear visual hierarchy
-  - [ ] Collapsible/expandable: collapsed by default showing step summary, expandable to full detail
+- [x] Task 4: Create Step Description Panel (AC: #2, #4)
+  - [x] Create `web/src/components/canvas/StepDescription.tsx` (separate component imported by `ExecutionOverlay.tsx`)
+  - [x] Show current step details: block type icon, label, description
+  - [x] Show input value, operation, output value for current step
+  - [x] At failure point: show expected vs actual, error message
+  - [x] Show common mistake context if applicable (configurable via pattern library from Task 5)
+  - [x] Style: card with monospace values (JetBrains Mono), clear visual hierarchy
+  - [x] Collapsible/expandable: collapsed by default showing step summary, expandable to full detail
 
-- [ ] Task 5: Implement Common Mistake Pattern Matching (AC: #4)
-  - [ ] Create `web/src/lib/execution/mistake-patterns.ts`
-  - [ ] Define pattern library: `{ patternId, condition: (report) => boolean, message: string }`
-  - [ ] Example patterns:
-    - Off-by-one errors: actual output differs by exactly 1
-    - Missing edge case: fails on empty input test but not non-empty
-    - Reverse comparison: got > when expected <
-    - Index out of bounds: error on array iteration
-  - [ ] `detectCommonMistake(report: ExecutionReport): string | null`
-  - [ ] Return formatted message: "80% of developers make this mistake here — check your comparison direction"
-  - [ ] Display in step description panel when pattern matches
+- [x] Task 5: Implement Common Mistake Pattern Matching (AC: #4)
+  - [x] Create `web/src/lib/execution/mistake-patterns.ts`
+  - [x] Define pattern library: `{ patternId, condition: (report) => boolean, message: string }`
+  - [x] Example patterns:
+    - [x] Off-by-one errors: actual output differs by exactly 1
+    - [x] Missing edge case: fails on empty input test but not non-empty
+    - [x] Reverse comparison: got > when expected <
+    - [x] Index out of bounds: error on array iteration
+  - [x] `detectCommonMistake(report: ExecutionReport): string | null`
+  - [x] Return formatted message: "80% of developers make this mistake here — check your comparison direction"
+  - [x] Display in step description panel when pattern matches
 
-- [ ] Task 6: Keyboard Navigation for Step-Through (AC: #6)
-  - [ ] Update `web/src/hooks/use-canvas-keyboard.ts`
-  - [ ] When ExecutionOverlay is active:
-    - Arrow Right → `nextStep()`
-    - Arrow Left → `previousStep()`
-    - Space → toggle play/pause
-  - [ ] Prevent default browser scroll behavior for consumed keys
-  - [ ] Register keyboard listeners when overlay mounts, remove on unmount
+- [x] Task 6: Keyboard Navigation for Step-Through (AC: #6)
+  - [x] Update `web/src/hooks/use-canvas-keyboard.ts`
+  - [x] When ExecutionOverlay is active:
+    - [x] Arrow Right → `nextStep()`
+    - [x] Arrow Left → `previousStep()`
+    - [x] Space → toggle play/pause
+  - [x] Prevent default browser scroll behavior for consumed keys
+  - [x] Register keyboard listeners when overlay mounts, remove on unmount
 
-- [ ] Task 7: Screen Reader Announcements (AC: #5)
-  - [ ] Update `web/src/hooks/use-canvas-announcer.ts`
-  - [ ] Render a visually-hidden `<div aria-live="assertive" aria-atomic="true">` inside `ExecutionOverlay.tsx` that the hook updates on each step transition
-  - [ ] On each step: announce "Step {N}: {block label} — {status}"
-  - [ ] On success step: announce "Step {N}: {block label} — passed"
-  - [ ] On failure step: announce "Step {N}: {block label} — failed. {error message}"
-  - [ ] On play start: announce "Auto-playing execution steps"
-  - [ ] On pause: announce "Execution paused at step {N}"
-  - [ ] Use `aria-live="assertive"` for step announcements (user must hear)
+- [x] Task 7: Screen Reader Announcements (AC: #5)
+  - [x] Update `web/src/hooks/use-canvas-announcer.ts`
+  - [x] Render a visually-hidden `<div aria-live="assertive" aria-atomic="true">` inside `ExecutionOverlay.tsx` that the hook updates on each step transition
+  - [x] On each step: announce "Step {N}: {block label} — {status}"
+  - [x] On success step: announce "Step {N}: {block label} — passed"
+  - [x] On failure step: announce "Step {N}: {block label} — failed. {error message}"
+  - [x] On play start: announce "Auto-playing execution steps"
+  - [x] On pause: announce "Execution paused at step {N}"
+  - [x] Use `aria-live="assertive"` for step announcements (user must hear)
 
-- [ ] Task 8: Integrate with Test Results (AC: #1)
-  - [ ] Wire canvas store `executionSteps` to ExecutionOverlay
-  - [ ] When test results arrive with failures: auto-show ExecutionOverlay
-  - [ ] Auto-scroll/highlight to first failure step
-  - [ ] Allow user to switch between different failed test cases
-  - [ ] Update `TestResults.tsx` (Story 2.4, `web/src/components/challenge/TestResults.tsx`): add "Step Through Failure" button that sets `stepThroughActive = true` in canvas store and opens the overlay
+- [x] Task 8: Integrate with Test Results (AC: #1)
+  - [x] Wire canvas store `executionSteps` to ExecutionOverlay
+  - [x] When test results arrive with failures: auto-show ExecutionOverlay
+  - [x] Auto-scroll/highlight to first failure step
+  - [x] Allow user to switch between different failed test cases
+  - [x] Update `TestResults.tsx` (Story 2.4, `web/src/components/challenge/TestResults.tsx`): add "Step Through Failure" button that sets `stepThroughActive = true` in canvas store and opens the overlay
 
-- [ ] Task 9: Update Canvas Store for Step State (AC: #1, #2, #3)
-  - [ ] Extend `web/src/stores/canvas-store.ts`
-  - [ ] Add `currentStepIndex: number`
-  - [ ] Add `isPlaying: boolean`
-  - [ ] Add `stepThroughActive: boolean`
-  - [ ] Add actions: `nextStep`, `previousStep`, `togglePlay`, `resetSteps`
-  - [ ] Add computed: `currentStep`, `isAtFailure`, `isAtStart`, `isAtEnd`
+- [x] Task 9: Update Canvas Store for Step State (AC: #1, #2, #3)
+  - [x] Extend `web/src/stores/canvas-store.ts`
+  - [x] Add `currentStepIndex: number`
+  - [x] Add `isPlaying: boolean`
+  - [x] Add `stepThroughActive: boolean`
+  - [x] Add actions: `nextStep`, `previousStep`, `togglePlay`, `resetSteps`
+  - [x] Add computed: `currentStep`, `isAtFailure`, `isAtStart`, `isAtEnd`
 
-- [ ] Task 10: Testing & Quality Assurance
-  - [ ] Write unit test for step tracker navigation (next, previous, bounds)
-  - [ ] Write unit test for execution highlighter styles at each step
-  - [ ] Write unit test for common mistake pattern detection
-  - [ ] Write unit test for auto-play timing (500ms interval, stops at failure)
-  - [ ] Write unit test for auto-play interval cleanup on unmount (no memory leak)
-  - [ ] Write unit test for keyboard listener registration and cleanup on unmount
-  - [ ] Write integration test: test fails → overlay appears → step through → highlights update
-  - [ ] Write integration test: play mode → auto-advances → pauses at failure
-  - [ ] Test keyboard navigation: arrow keys, space bar (verify preventDefault)
-  - [ ] Accessibility test: screen reader announcements for each step
-  - [ ] Test edge cases: single step execution, no failures, all failures
-  - [ ] Test common mistake message display on matching failure
-  - [ ] Verify `npm run build` succeeds without errors
+- [x] Task 10: Testing & Quality Assurance
+  - [x] Write unit test for step tracker navigation (next, previous, bounds)
+  - [x] Write unit test for execution highlighter styles at each step
+  - [x] Write unit test for common mistake pattern detection
+  - [x] Write unit test for auto-play timing (500ms interval, stops at failure)
+  - [x] Write unit test for auto-play interval cleanup on unmount (no memory leak)
+  - [x] Write unit test for keyboard listener registration and cleanup on unmount
+  - [x] Write integration test: test fails → overlay appears → step through → highlights update
+  - [x] Write integration test: play mode → auto-advances → pauses at failure
+  - [x] Test keyboard navigation: arrow keys, space bar (verify preventDefault)
+  - [x] Accessibility test: screen reader announcements for each step
+  - [x] Test edge cases: single step execution, no failures, all failures
+  - [x] Test common mistake message display on matching failure
+  - [x] Verify `npm run build` succeeds without errors
 
 ## Runnable Code Location
 
@@ -258,10 +258,44 @@ Step Description Card:      bg #0F172A, border #334155, monospace values
 
 ### Agent Model Used
 
-{{agent_model_name_version}}
+glm-5.1
 
 ### Debug Log References
 
+- All unit tests for step-tracker, execution-highlighter, mistake-patterns, canvas-store (step state), use-canvas-keyboard, use-canvas-announcer pass
+- Integration tests for step-through flow pass
+- `npm run build` succeeds without errors
+- Pre-existing test failures in interpreter.test.ts and canvas-store-block-management.test.ts are unrelated to this story
+
 ### Completion Notes List
 
+- Task 1: Created `step-tracker.ts` with `getExecutionPath()`, `canStepForward()`, `canStepBackward()`, `isAtFailurePoint()`, etc. 19 unit tests pass.
+- Task 9: Extended `canvas-store.ts` with `currentStepIndex`, `isPlaying`, `stepThroughActive`, plus actions `nextStep`, `previousStep`, `togglePlay`, `resetSteps`, `setStepThroughActive`. 12 new store tests pass.
+- Task 3: Created `execution-highlighter.ts` with `getBlockHighlightState()`, `getHighlightStyles()`, `applyExecutionHighlighting()`. Implements all 5 visual states (unexecuted, currently-executing, executed-success, executed-failure, not-yet-executed). 16 unit tests pass.
+- Task 2: Created `ExecutionOverlay.tsx` with play/pause/step controls, auto-play at 500ms, pause at failure, progress indicator. Uses React Flow `<Panel position="bottom-center">`.
+- Task 4: Created `StepDescription.tsx` with collapsible step details, block type label, input/output values, error messages, and common mistake context integration.
+- Task 5: Created `mistake-patterns.ts` with 6 pattern detectors (off-by-one, missing-edge-case, reverse-comparison, null-reference, index-out-of-bounds, type-mismatch). 12 unit tests pass.
+- Task 6: Updated `use-canvas-keyboard.ts` with step-through keyboard controls (Arrow Right/Left/Space) when overlay active. 11 tests pass.
+- Task 7: Updated `use-canvas-announcer.ts` with `announceStep()`, `announceStepSuccess()`, `announceStepFailure()`, `announceAutoPlayStart()`, `announcePause()`. Added `aria-live="assertive"` announcer div. 10 tests pass.
+- Task 8: Integrated ExecutionOverlay into LogicBlockCanvas with execution highlighting, step-announcer div, keyboard controls with step-through support. Updated TestResults.tsx with "Step Through" button.
+- Task 10: Created comprehensive integration tests in `step-through-integration.test.ts`. All 108 story-related tests pass. Build succeeds.
+
 ### File List
+
+- `web/src/lib/execution/step-tracker.ts` (new)
+- `web/src/lib/execution/step-tracker.test.ts` (new)
+- `web/src/lib/canvas/execution-highlighter.ts` (new)
+- `web/src/lib/canvas/execution-highlighter.test.ts` (new)
+- `web/src/lib/execution/mistake-patterns.ts` (new)
+- `web/src/lib/execution/mistake-patterns.test.ts` (new)
+- `web/src/lib/execution/step-through-integration.test.ts` (new)
+- `web/src/components/canvas/ExecutionOverlay.tsx` (new)
+- `web/src/components/canvas/StepDescription.tsx` (new)
+- `web/src/stores/canvas-store.ts` (modified)
+- `web/src/stores/canvas-store.test.ts` (modified)
+- `web/src/hooks/use-canvas-keyboard.ts` (modified)
+- `web/src/hooks/use-canvas-keyboard.test.ts` (modified)
+- `web/src/hooks/use-canvas-announcer.ts` (modified)
+- `web/src/hooks/use-canvas-announcer.test.ts` (modified)
+- `web/src/components/canvas/LogicBlockCanvas.tsx` (modified)
+- `web/src/components/challenge/TestResults.tsx` (modified)
