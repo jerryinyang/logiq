@@ -1,4 +1,4 @@
-import type { BlockType, BlockCategory } from '@/types/canvas-types'
+import type { BlockType, BlockCategory, EdgeCaseType } from '@/types/canvas-types'
 import { BLOCK_CATEGORY_MAP } from '@/types/canvas-types'
 
 export interface BlockVocabularyEntry {
@@ -6,6 +6,7 @@ export interface BlockVocabularyEntry {
   label: string
   description: string
   category: BlockCategory
+  edgeCaseType?: EdgeCaseType
 }
 
 const loopBlocks: BlockVocabularyEntry[] = [
@@ -125,30 +126,35 @@ const edgeCaseBlocks: BlockVocabularyEntry[] = [
     label: 'Empty Input',
     description: 'Handle the case where input is empty or null',
     category: BLOCK_CATEGORY_MAP.edgeCase,
+    edgeCaseType: 'emptyInput',
   },
   {
     type: 'edgeCase',
     label: 'Single Element',
     description: 'Handle the case where a collection has only one element',
     category: BLOCK_CATEGORY_MAP.edgeCase,
+    edgeCaseType: 'singleElement',
   },
   {
     type: 'edgeCase',
     label: 'Already Sorted',
     description: 'Handle the case where input is already in sorted order',
     category: BLOCK_CATEGORY_MAP.edgeCase,
+    edgeCaseType: 'alreadySorted',
   },
   {
     type: 'edgeCase',
     label: 'Duplicates',
     description: 'Handle the case where input contains duplicate values',
     category: BLOCK_CATEGORY_MAP.edgeCase,
+    edgeCaseType: 'duplicates',
   },
   {
     type: 'edgeCase',
     label: 'Max Value',
     description: 'Handle the case where a value reaches the maximum boundary',
     category: BLOCK_CATEGORY_MAP.edgeCase,
+    edgeCaseType: 'maxValue',
   },
 ]
 

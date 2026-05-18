@@ -1,5 +1,5 @@
 # generated: 2026-04-14
-# last_updated: 2026-05-15
+# last_updated: 2026-05-18
 # project: logiq
 # project_key: NOKEY
 # tracking_system: file-system
@@ -35,7 +35,7 @@
 # - Dev moves story to 'review', then runs code-review (fresh context, different LLM recommended)
 
 generated: 2026-04-14
-last_updated: 2026-05-15
+last_updated: 2026-05-18
 project: logiq
 project_key: NOKEY
 tracking_system: file-system
@@ -65,7 +65,7 @@ development_status:
   2-4-build-logic-block-execution-engine-test-runner: done
   2-5-implement-step-through-execution-visualization: done
   2-6-implement-iteration-canvas-state-persistence: done
-  2-7-implement-edge-case-handling-blocks: ready-for-dev
+  2-7-implement-edge-case-handling-blocks: review
   epic-2-retrospective: optional
 
   # ==============================

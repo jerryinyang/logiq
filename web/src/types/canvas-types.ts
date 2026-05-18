@@ -9,6 +9,8 @@ export type BlockType =
   | 'variable'
   | 'edgeCase'
 
+export type EdgeCaseType = 'emptyInput' | 'singleElement' | 'alreadySorted' | 'duplicates' | 'maxValue'
+
 export interface BlockCategory {
   type: BlockType
   label: string

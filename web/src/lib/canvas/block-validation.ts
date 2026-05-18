@@ -16,7 +16,7 @@ const COMPATIBLE_CONNECTIONS: CompatibilityMatrix = {
   variable: ['comparison', 'assignment'],
   assignment: ['return', 'comparison'],
   return: [],
-  edgeCase: ['condition', 'comparison', 'assignment'],
+  edgeCase: ['condition', 'comparison', 'assignment', 'return', 'variable'],
 }
 
 const BLOCK_LABELS: Record<BlockType, string> = {
@@ -74,6 +74,29 @@ export function getConnectionRules(): ConnectionRule[] {
   }
 
   return rules
+}
+
+export function isValidEdgeCaseConnection(
+  sourceHandle: string | undefined,
+  toType: BlockType
+): { valid: boolean; reason?: string } {
+  if (!sourceHandle) {
+    return { valid: true }
+  }
+
+  if (sourceHandle === 'edge-case-hit') {
+    const hitAllowed = ['condition', 'comparison', 'assignment', 'return', 'variable']
+    if (!hitAllowed.includes(toType)) {
+      return { valid: false, reason: `Edge case "hit" path cannot connect to ${BLOCK_LABELS[toType]}` }
+    }
+    return { valid: true }
+  }
+
+  if (sourceHandle === 'edge-case-miss') {
+    return isValidBlockConnection('edgeCase' as BlockType, toType)
+  }
+
+  return { valid: true }
 }
 
 export { COMPATIBLE_CONNECTIONS, BLOCK_LABELS }

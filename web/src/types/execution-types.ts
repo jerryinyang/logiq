@@ -1,4 +1,4 @@
-import type { BlockType } from '@/types/canvas-types'
+import type { BlockType, EdgeCaseType } from '@/types/canvas-types'
 
 export interface ExecutionStep {
   stepIndex: number
@@ -9,6 +9,9 @@ export interface ExecutionStep {
   status: 'executing' | 'success' | 'error'
   errorMessage?: string
   duration: number
+  edgeCaseDetected?: boolean
+  edgeCaseType?: EdgeCaseType
+  edgeCaseHit?: boolean
 }
 
 export interface TestResult {

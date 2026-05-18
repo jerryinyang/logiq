@@ -7,6 +7,7 @@ import { Badge } from '@/components/ui/badge'
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion'
 import type { TestResult } from '@/types/execution-types'
 import { useCanvasStore } from '@/stores/canvas-store'
+import { EdgeCaseStressTest } from '@/components/challenge/EdgeCaseStressTest'
 
 interface TestResultsProps {
   results: TestResult[]
@@ -23,10 +24,84 @@ function formatValue(value: unknown): string {
 }
 
 export function TestResults({ results, onClose }: TestResultsProps) {
+  const standardResults = results.filter((r) => !r.isEdgeCase)
+  const edgeCaseResults = results.filter((r) => r.isEdgeCase)
+  const hasEdgeCases = edgeCaseResults.length > 0
+
   const passedCount = results.filter((r) => r.passed).length
   const failedCount = results.length - passedCount
   const allPassed = failedCount === 0
   const setStepThroughActive = useCanvasStore((s) => s.setStepThroughActive)
+
+  if (hasEdgeCases) {
+    return (
+      <AnimatePresence>
+        <motion.div
+          initial={{ opacity: 0, y: 40 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: 40 }}
+          transition={{ type: 'spring', damping: 25, stiffness: 300 }}
+          className="w-full max-w-lg"
+        >
+          <Card className="border-[#334155] bg-[#1E293B] text-white shadow-xl">
+            <CardHeader className="flex flex-row items-center justify-between pb-3">
+              <CardTitle className="flex items-center gap-2 text-base">
+                {allPassed ? (
+                  <>
+                    <motion.div
+                      initial={{ scale: 0 }}
+                      animate={{ scale: 1 }}
+                      transition={{ type: 'spring', damping: 10, stiffness: 200, delay: 0.2 }}
+                    >
+                      <CheckCircle2 className="h-5 w-5 text-emerald-400" />
+                    </motion.div>
+                    <span>All test cases passed</span>
+                  </>
+                ) : (
+                  <>
+                    <XCircle className="h-5 w-5 text-rose-400" />
+                    <span>Some tests failed</span>
+                  </>
+                )}
+              </CardTitle>
+              <div className="flex items-center gap-2">
+                <div className="flex gap-1.5">
+                  <Badge className="bg-emerald-900/50 text-emerald-400 border-emerald-700/50 hover:bg-emerald-900/70">
+                    {passedCount} passed
+                  </Badge>
+                  {failedCount > 0 && (
+                    <Badge className="bg-rose-900/50 text-rose-400 border-rose-700/50 hover:bg-rose-900/70">
+                      {failedCount} failed
+                    </Badge>
+                  )}
+                </div>
+                {!allPassed && (
+                  <button
+                    onClick={() => { setStepThroughActive(true) }}
+                    className="flex items-center gap-1.5 rounded-md bg-indigo-600 px-2.5 py-1 text-xs font-medium text-white hover:bg-indigo-700 transition-colors"
+                    aria-label="Step through failure"
+                  >
+                    <Eye className="h-3.5 w-3.5" />
+                    Step Through
+                  </button>
+                )}
+                <button
+                  onClick={onClose}
+                  className="rounded-md p-1 text-slate-400 hover:bg-slate-700 hover:text-white transition-colors"
+                  aria-label="Close results"
+                >
+                  <X className="h-4 w-4" />
+                </button>
+              </div>
+            </CardHeader>
+            <CardContent className="pt-0">
+              <EdgeCaseStressTest standardResults={standardResults} edgeCaseResults={edgeCaseResults} />
+            </CardContent>
+          </Card>
+        </motion.div>
+      </AnimatePresence>
+    )
+  }
 
   return (
     <AnimatePresence>
@@ -128,11 +203,6 @@ export function TestResults({ results, onClose }: TestResultsProps) {
                         <span className={result.passed ? 'text-slate-300' : 'text-white font-medium'}>
                           Test Case {result.testCaseId}
                         </span>
-                        {result.isEdgeCase && (
-                          <Badge variant="outline" className="text-xs border-amber-600 text-amber-400">
-                            edge case
-                          </Badge>
-                        )}
                       </div>
                     </AccordionTrigger>
                     <AccordionContent>

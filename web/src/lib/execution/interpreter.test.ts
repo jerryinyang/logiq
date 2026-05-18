@@ -208,7 +208,7 @@ describe('interpreter', () => {
         makeConfig('r1', 'return', { value: '$e1_output' }),
       ]
       const report = interpretBlockConfig(config, [42])
-      expect(report.steps[0].output).toEqual([42])
+      expect(report.steps[0].output).toBe(42)
     })
 
     it('detects duplicates', () => {
@@ -356,6 +356,48 @@ describe('interpreter', () => {
       ]
       const report = interpretBlockConfig(config, Number.MAX_SAFE_INTEGER)
       expect(report.steps[0].output).toBe('at-max')
+    })
+  })
+
+  describe('edge case execution step metadata', () => {
+    it('records edgeCaseDetected on edge case blocks', () => {
+      const config = [
+        makeConfig('e1', 'edgeCase', { condition: 'emptyInput', input: [] }),
+      ]
+      const report = interpretBlockConfig(config, [])
+      expect(report.steps[0].edgeCaseDetected).toBe(true)
+      expect(report.steps[0].edgeCaseType).toBe('emptyInput')
+      expect(report.steps[0].edgeCaseHit).toBe(true)
+    })
+
+    it('records edgeCaseHit=false when condition not met', () => {
+      const config = [
+        makeConfig('e1', 'edgeCase', { condition: 'emptyInput', input: [1, 2, 3] }),
+        makeConfig('r1', 'return', { value: '$e1_result' }),
+      ]
+      const report = interpretBlockConfig(config, [1, 2, 3])
+      expect(report.steps[0].edgeCaseDetected).toBe(true)
+      expect(report.steps[0].edgeCaseType).toBe('emptyInput')
+      expect(report.steps[0].edgeCaseHit).toBe(false)
+    })
+
+    it('does not set edge case metadata on non-edge case blocks', () => {
+      const config = [
+        makeConfig('v1', 'variable', { variableName: 'x', value: 42, action: 'set' }),
+      ]
+      const report = interpretBlockConfig(config, null)
+      expect(report.steps[0].edgeCaseDetected).toBeUndefined()
+      expect(report.steps[0].edgeCaseType).toBeUndefined()
+      expect(report.steps[0].edgeCaseHit).toBeUndefined()
+    })
+
+    it('records correct edgeCaseType for each edge case variant', () => {
+      const singleElementConfig = [
+        makeConfig('e1', 'edgeCase', { condition: 'singleElement', input: [42] }),
+      ]
+      const report = interpretBlockConfig(singleElementConfig, [42])
+      expect(report.steps[0].edgeCaseType).toBe('singleElement')
+      expect(report.steps[0].edgeCaseHit).toBe(true)
     })
   })
 })

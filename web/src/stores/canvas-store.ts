@@ -7,6 +7,11 @@ import { isValidBlockConnection } from '@/lib/canvas/block-validation'
 import { wouldCreateCycle } from '@/lib/canvas/cycle-detection'
 import { HistoryManager } from '@/lib/canvas/history-manager'
 
+interface CategorizedEdgeCaseResults {
+  standard: TestResult[]
+  edgeCase: TestResult[]
+}
+
 interface ValidationResult {
   valid: boolean
   error?: ConnectionValidationError
@@ -26,6 +31,9 @@ interface CanvasStoreState extends Omit<CanvasState, 'viewport'> {
   isPlaying: boolean
   stepThroughActive: boolean
   historyManager: HistoryManager
+  edgeCaseResults: CategorizedEdgeCaseResults | null
+  activeEdgeCase: string | null
+  edgeCaseHitCount: number
   setNodes: (nodesOrUpdater: Node[] | ((prev: Node[]) => Node[])) => void
   setEdges: (edgesOrUpdater: Edge[] | ((prev: Edge[]) => Edge[])) => void
   addBlock: (blockData: { id: string; type: BlockType; label: string; description: string; category: BlockCategory }, position: XYPosition) => void
@@ -52,6 +60,9 @@ interface CanvasStoreState extends Omit<CanvasState, 'viewport'> {
   togglePlay: () => void
   resetSteps: () => void
   setStepThroughActive: (active: boolean) => void
+  setEdgeCaseResults: (results: CategorizedEdgeCaseResults | null) => void
+  setActiveEdgeCase: (edgeCaseId: string | null) => void
+  incrementEdgeCaseHitCount: () => void
   resetTest: () => void
   resetCanvas: () => void
   setDraftStatus: (status: DraftStatus) => void
@@ -81,6 +92,9 @@ export const useCanvasStore = create<CanvasStoreState>()(
     isPlaying: false,
     stepThroughActive: false,
     historyManager,
+    edgeCaseResults: null,
+    activeEdgeCase: null,
+    edgeCaseHitCount: 0,
     draftStatus: 'none' as DraftStatus,
     resetCount: 0,
 
@@ -422,6 +436,24 @@ export const useCanvasStore = create<CanvasStoreState>()(
       })
     },
 
+    setEdgeCaseResults: (results: CategorizedEdgeCaseResults | null) => {
+      set((state) => {
+        state.edgeCaseResults = results
+      })
+    },
+
+    setActiveEdgeCase: (edgeCaseId: string | null) => {
+      set((state) => {
+        state.activeEdgeCase = edgeCaseId
+      })
+    },
+
+    incrementEdgeCaseHitCount: () => {
+      set((state) => {
+        state.edgeCaseHitCount += 1
+      })
+    },
+
     resetTest: () => {
       set((state) => {
         state.testStatus = 'idle'
@@ -430,6 +462,9 @@ export const useCanvasStore = create<CanvasStoreState>()(
         state.currentStepIndex = -1
         state.isPlaying = false
         state.stepThroughActive = false
+        state.edgeCaseResults = null
+        state.activeEdgeCase = null
+        state.edgeCaseHitCount = 0
       })
     },
 
@@ -451,6 +486,9 @@ export const useCanvasStore = create<CanvasStoreState>()(
         state.currentStepIndex = -1
         state.isPlaying = false
         state.stepThroughActive = false
+        state.edgeCaseResults = null
+        state.activeEdgeCase = null
+        state.edgeCaseHitCount = 0
         state.draftStatus = 'none'
         state.resetCount += 1
       })

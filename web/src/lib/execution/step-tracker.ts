@@ -1,4 +1,5 @@
 import type { ExecutionStep } from '@/types/execution-types'
+import type { EdgeCaseType } from '@/types/canvas-types'
 
 export interface StepTrackerState {
   currentIndex: number
@@ -8,6 +9,38 @@ export interface StepTrackerState {
   hasPrevious: boolean
   failureIndex: number | null
   failureStep: ExecutionStep | null
+}
+
+export interface EdgeCaseStepInfo {
+  stepType: 'edgeCase'
+  edgeCaseType: EdgeCaseType
+  hit: boolean
+  label: string
+}
+
+export function getEdgeCaseStepInfo(step: ExecutionStep): EdgeCaseStepInfo | null {
+  if (step.blockType !== 'edgeCase' || !step.edgeCaseType) {
+    return null
+  }
+  return {
+    stepType: 'edgeCase',
+    edgeCaseType: step.edgeCaseType,
+    hit: step.edgeCaseHit ?? false,
+    label: `Edge case ${step.edgeCaseType} — ${step.edgeCaseHit ? 'hit' : 'missed'}`,
+  }
+}
+
+export function describeStepForScreenReader(step: ExecutionStep): string {
+  const baseDescription = `Step ${step.stepIndex + 1}: ${step.blockType} block`
+
+  if (step.blockType === 'edgeCase' && step.edgeCaseType) {
+    const edgeInfo = getEdgeCaseStepInfo(step)
+    if (edgeInfo) {
+      return `Step ${step.stepIndex + 1}: ${edgeInfo.label}`
+    }
+  }
+
+  return baseDescription
 }
 
 export function getExecutionPath(steps: ExecutionStep[]): StepTrackerState {
@@ -59,4 +92,16 @@ export function isAtEnd(currentIndex: number, totalSteps: number): boolean {
 
 export function isAtStart(currentIndex: number): boolean {
   return currentIndex === 0
+}
+
+export function getEdgeCaseSteps(steps: ExecutionStep[]): ExecutionStep[] {
+  return steps.filter((s) => s.blockType === 'edgeCase')
+}
+
+export function isEdgeCaseHitStep(step: ExecutionStep): boolean {
+  return step.blockType === 'edgeCase' && step.edgeCaseHit === true
+}
+
+export function isEdgeCaseMissStep(step: ExecutionStep): boolean {
+  return step.blockType === 'edgeCase' && step.edgeCaseHit === false
 }

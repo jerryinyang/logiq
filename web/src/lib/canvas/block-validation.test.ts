@@ -137,9 +137,72 @@ describe('block-validation', () => {
         expect(result.valid).toBe(false)
       })
 
-      it('rejects EdgeCase → Return (not in compatibility list)', () => {
-        const result = isValidBlockConnection('edgeCase', 'return')
+it('allows EdgeCase → Return (case detected path)', () => {
+        expect(isValidBlockConnection('edgeCase', 'return')).toEqual({ valid: true })
+      })
+
+      it('allows EdgeCase → Variable', () => {
+        expect(isValidBlockConnection('edgeCase', 'variable')).toEqual({ valid: true })
+      })
+    })
+
+    describe('invalid connections', () => {
+      it('rejects self-connections', () => {
+        const result = isValidBlockConnection('loop', 'loop')
         expect(result.valid).toBe(false)
+        expect(result.reason).toContain('itself')
+      })
+
+      it('rejects Return → any (terminal block)', () => {
+        const result = isValidBlockConnection('return', 'condition')
+        expect(result.valid).toBe(false)
+        expect(result.reason).toContain('terminal')
+      })
+
+      it('rejects Loop → Return (not in compatibility list)', () => {
+        const result = isValidBlockConnection('loop', 'return')
+        expect(result.valid).toBe(false)
+        expect(result.reason).toContain('incompatible types')
+      })
+
+      it('rejects Variable → Condition (not in compatibility list)', () => {
+        const result = isValidBlockConnection('variable', 'condition')
+        expect(result.valid).toBe(false)
+        expect(result.reason).toContain('incompatible types')
+      })
+
+      it('rejects Variable → Return (not in compatibility list)', () => {
+        const result = isValidBlockConnection('variable', 'return')
+        expect(result.valid).toBe(false)
+      })
+
+      it('rejects Return → Return (self-connection + terminal)', () => {
+        const result = isValidBlockConnection('return', 'return')
+        expect(result.valid).toBe(false)
+      })
+
+      it('rejects Condition → Loop (not in compatibility list)', () => {
+        const result = isValidBlockConnection('condition', 'loop')
+        expect(result.valid).toBe(false)
+      })
+
+      it('rejects Comparison → Loop (not in compatibility list)', () => {
+        const result = isValidBlockConnection('comparison', 'loop')
+        expect(result.valid).toBe(false)
+      })
+
+      it('rejects Assignment → Loop (not in compatibility list)', () => {
+        const result = isValidBlockConnection('assignment', 'loop')
+        expect(result.valid).toBe(false)
+      })
+
+      it('rejects EdgeCase → Loop (not in compatibility list)', () => {
+        const result = isValidBlockConnection('edgeCase', 'loop')
+        expect(result.valid).toBe(false)
+      })
+
+      it('rejects EdgeCase → Variable (not in compatibility list for miss path)', () => {
+        expect(isValidBlockConnection('edgeCase', 'variable')).toEqual({ valid: true })
       })
     })
 

@@ -1,6 +1,7 @@
 import type { SerializedBlockConfig } from '@/types/execution-types'
 import type { ExecutionStep, ExecutionReport } from '@/types/execution-types'
-import type { BlockType } from '@/types/canvas-types'
+import type { BlockType, EdgeCaseType } from '@/types/canvas-types'
+import { evaluateEdgeCase } from './edge-case-handlers'
 
 type ExecutionScope = Map<string, unknown>
 
@@ -226,45 +227,38 @@ function executeReturn(
 function executeEdgeCase(
   block: SerializedBlockConfig,
   scope: ExecutionScope
-): { output: unknown; earlyReturn: boolean; error?: string } {
-  const condition = block.config.condition as string
+): { output: unknown; earlyReturn: boolean; error?: string; edgeCaseDetected?: boolean; edgeCaseType?: string; edgeCaseHit?: boolean } {
+  const edgeCaseType = (block.config.condition as string) ?? (block.config.edgeCaseType as string)
   const inputValue = resolveValue(block.config.input, scope)
 
-  let conditionMet = false
-
-  switch (condition) {
-    case 'emptyInput':
-      conditionMet = inputValue === null || inputValue === undefined || (Array.isArray(inputValue) && inputValue.length === 0) || (typeof inputValue === 'string' && inputValue.length === 0)
-      break
-    case 'singleElement':
-      conditionMet = Array.isArray(inputValue) && inputValue.length === 1
-      break
-    case 'alreadySorted':
-      if (Array.isArray(inputValue)) {
-        conditionMet = inputValue.every((val, i, arr) => i === 0 || arr[i - 1] <= val)
-      }
-      break
-    case 'duplicates':
-      if (Array.isArray(inputValue)) {
-        conditionMet = new Set(inputValue).size < inputValue.length
-      }
-      break
-    case 'maxValue':
-      conditionMet = inputValue === Number.MAX_SAFE_INTEGER || inputValue === Infinity
-      break
-    default:
-      conditionMet = false
+  if (!edgeCaseType) {
+    return { output: undefined, earlyReturn: false, error: 'Edge case block requires an edgeCaseType' }
   }
 
-  scope.set(`${block.id}_result`, conditionMet)
+  const result = evaluateEdgeCase(edgeCaseType as EdgeCaseType, inputValue, block.config as Record<string, unknown>)
 
-  if (conditionMet) {
+  scope.set(`${block.id}_result`, result.hit)
+  scope.set(`${block.id}_output`, result.hit ? (result.value ?? inputValue) : false)
+
+  if (result.hit) {
     const returnValue = resolveValue(block.config.returnValue, scope)
-    scope.set(`${block.id}_output`, returnValue ?? inputValue)
-    return { output: returnValue ?? inputValue, earlyReturn: true }
+    scope.set(`${block.id}_output`, returnValue ?? result.value ?? inputValue)
+    return {
+      output: returnValue ?? result.value ?? inputValue,
+      earlyReturn: true,
+      edgeCaseDetected: true,
+      edgeCaseType,
+      edgeCaseHit: true,
+    }
   }
 
-  return { output: conditionMet, earlyReturn: false }
+  return {
+    output: false,
+    earlyReturn: false,
+    edgeCaseDetected: true,
+    edgeCaseType,
+    edgeCaseHit: false,
+  }
 }
 
 function resolveValue(value: unknown, scope: ExecutionScope): unknown {
@@ -282,7 +276,7 @@ function executeBlock(
   steps: ExecutionStep[],
   stepCounter: { value: number },
   executedBlocks: Set<string>
-): { output: unknown; error?: string; earlyReturn?: boolean } {
+): { output: unknown; error?: string; earlyReturn?: boolean; edgeCaseDetected?: boolean; edgeCaseType?: string; edgeCaseHit?: boolean } {
   const start = performance.now()
   const stepIndex = stepCounter.value++
   const input = captureBlockInput(block, scope)
@@ -291,7 +285,7 @@ function executeBlock(
     createStep(stepIndex, block.id, block.type, input, undefined, 'executing', 0)
   )
 
-  let result: { output: unknown; error?: string; earlyReturn?: boolean }
+  let result: { output: unknown; error?: string; earlyReturn?: boolean; edgeCaseDetected?: boolean; edgeCaseType?: string; edgeCaseHit?: boolean }
 
   switch (block.type) {
     case 'loop':
@@ -334,10 +328,15 @@ function executeBlock(
     existingStep.status = status
     existingStep.duration = duration
     if (result.error) existingStep.errorMessage = result.error
+    if (result.edgeCaseDetected !== undefined) existingStep.edgeCaseDetected = result.edgeCaseDetected
+    if (result.edgeCaseType !== undefined) existingStep.edgeCaseType = result.edgeCaseType as EdgeCaseType
+    if (result.edgeCaseHit !== undefined) existingStep.edgeCaseHit = result.edgeCaseHit
   } else {
-    steps.push(
-      createStep(stepIndex, block.id, block.type, input, result.output, status, duration, result.error)
-    )
+    const newStep = createStep(stepIndex, block.id, block.type, input, result.output, status, duration, result.error)
+    if (result.edgeCaseDetected !== undefined) newStep.edgeCaseDetected = result.edgeCaseDetected
+    if (result.edgeCaseType !== undefined) newStep.edgeCaseType = result.edgeCaseType as EdgeCaseType
+    if (result.edgeCaseHit !== undefined) newStep.edgeCaseHit = result.edgeCaseHit
+    steps.push(newStep)
   }
 
   return result

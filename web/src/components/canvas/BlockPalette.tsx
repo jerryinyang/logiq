@@ -7,6 +7,7 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from '@/components/ui/accordion'
+import { AlertTriangle } from 'lucide-react'
 import { BLOCK_CATEGORIES } from '@/types/canvas-types'
 import { BLOCKS_BY_CATEGORY } from '@/lib/canvas/block-vocabulary'
 import type { BlockType, BlockCategory } from '@/types/canvas-types'
@@ -84,6 +85,9 @@ export function BlockPalette() {
                     className="inline-block h-2.5 w-2.5 rounded-full"
                     style={{ backgroundColor: category.color }}
                   />
+                  {category.type === 'edgeCase' && (
+                    <AlertTriangle className="h-3.5 w-3.5 text-amber-400" />
+                  )}
                   <span className="text-sm font-medium text-foreground">{category.label}</span>
                   <span className="ml-auto text-xs text-muted-foreground">{blocks.length}</span>
                 </div>
