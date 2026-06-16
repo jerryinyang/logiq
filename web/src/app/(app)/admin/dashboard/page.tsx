@@ -9,7 +9,7 @@ export default async function AdminDashboardPage() {
   if (error || !user) {
     securityLog({
       type: 'UNAUTHORIZED_ACCESS_ATTEMPT',
-      userId: user?.id ?? 'unknown',
+      userId: 'unknown',
       ip: undefined,
       userAgent: undefined,
     })

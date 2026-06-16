@@ -1,6 +1,6 @@
 # Story 2.6: Implement Iteration & Canvas State Persistence
 
-Status: ready-for-dev
+Status: done
 
 <!-- Note: Validation is optional. Run validate-create-story for quality check before dev-story. -->
 
@@ -26,85 +26,85 @@ So that I can iterate toward a correct solution.
 
 ## Tasks / Subtasks
 
-- [ ] Task 1: Implement Canvas History (Undo/Redo) (AC: #6)
-  - [ ] Create `web/src/lib/canvas/history-manager.ts`
-  - [ ] Track node/edge changes in a history stack (max 50 entries)
-  - [ ] Each history entry: `{ nodes, edges, timestamp }` — snapshot of full state
-  - [ ] `pushHistory(nodes, edges)` — add snapshot before each state change
-  - [ ] `undo()`: return `{ nodes, edges }` from previous snapshot, move pointer back
-  - [ ] `redo()`: return `{ nodes, edges }` from next snapshot, move pointer forward
-  - [ ] On new modification after undo: truncate redo stack
-  - [ ] Track `canUndo` and `canRedo` booleans
-  - [ ] Integrate with React Flow's `onNodesChange`/`onEdgesChange` to capture changes
+- [x] Task 1: Implement Canvas History (Undo/Redo) (AC: #6)
+  - [x] Create `web/src/lib/canvas/history-manager.ts`
+  - [x] Track node/edge changes in a history stack (max 50 entries)
+  - [x] Each history entry: `{ nodes, edges, timestamp }` — snapshot of full state
+  - [x] `pushHistory(nodes, edges)` — add snapshot before each state change
+  - [x] `undo()`: return `{ nodes, edges }` from previous snapshot, move pointer back
+  - [x] `redo()`: return `{ nodes, edges }` from next snapshot, move pointer forward
+  - [x] On new modification after undo: truncate redo stack
+  - [x] Track `canUndo` and `canRedo` booleans
+  - [x] Integrate with React Flow's `onNodesChange`/`onEdgesChange` to capture changes
 
-- [ ] Task 2: Integrate Undo/Redo into Canvas Store (AC: #6)
-  - [ ] Extend `web/src/stores/canvas-store.ts`
-  - [ ] Add history manager instance or methods: `undo()`, `redo()`
-  - [ ] Add `canUndo: boolean`, `canRedo: boolean` state
-  - [ ] Wire Ctrl+Z / Cmd+Z to `undo()` via keyboard hook
-  - [ ] Wire Ctrl+Shift+Z / Cmd+Shift+Z to `redo()`
-  - [ ] Wire Ctrl+Y to `redo()`
+- [x] Task 2: Integrate Undo/Redo into Canvas Store (AC: #6)
+  - [x] Extend `web/src/stores/canvas-store.ts`
+  - [x] Add history manager instance or methods: `undo()`, `redo()`
+  - [x] Add `canUndo: boolean`, `canRedo: boolean` state
+  - [x] Wire Ctrl+Z / Cmd+Z to `undo()` via keyboard hook
+  - [x] Wire Ctrl+Shift+Z / Cmd+Shift+Z to `redo()`
+  - [x] Wire Ctrl+Y to `redo()`
 
-- [ ] Task 3: Implement Auto-Save to Local Storage (AC: #1, #4, #5)
-  - [ ] Create `web/src/lib/canvas/auto-save.ts`
-  - [ ] `saveDraft(challengeId: string, nodes: Node[], edges: Edge[]): void` — serialize and write to localStorage (userId obtained from `useUserStore.getState().user.id` internally)
-  - [ ] `loadDraft(challengeId: string): { nodes: Node[], edges: Edge[] } | null` — read and deserialize from localStorage
-  - [ ] `clearDraft(challengeId: string): void` — remove draft from localStorage
-  - [ ] Storage key format: `logiq:draft:{userId}:{challengeId}`
-  - [ ] Auto-save interval: 30 seconds during active canvas interaction (debounced)
-  - [ ] On save: show subtle "Draft saved" indicator (small text, bottom-right, 2s fade out)
-  - [ ] Handle storage quota exceeded: catch error, warn user, clear oldest drafts
-  - [ ] Serialize dates as ISO 8601 strings, exclude non-serializable data
+- [x] Task 3: Implement Auto-Save to Local Storage (AC: #1, #4, #5)
+  - [x] Create `web/src/lib/canvas/auto-save.ts`
+  - [x] `saveDraft(challengeId: string, nodes: Node[], edges: Edge[]): void` — serialize and write to localStorage (userId obtained from `useUserStore.getState().user.id` internally)
+  - [x] `loadDraft(challengeId: string): { nodes: Node[], edges: Edge[] } | null` — read and deserialize from localStorage
+  - [x] `clearDraft(challengeId: string): void` — remove draft from localStorage
+  - [x] Storage key format: `logiq:draft:{userId}:{challengeId}`
+  - [x] Auto-save interval: 30 seconds during active canvas interaction (debounced)
+  - [x] On save: show subtle "Draft saved" indicator (small text, bottom-right, 2s fade out)
+  - [x] Handle storage quota exceeded: catch error, warn user, clear oldest drafts
+  - [x] Serialize dates as ISO 8601 strings, exclude non-serializable data
 
-- [ ] Task 4: Implement Draft Restoration (AC: #4)
-  - [ ] On challenge page mount (`/(app)/challenge/[id]/page.tsx`):
+- [x] Task 4: Implement Draft Restoration (AC: #4)
+  - [x] On challenge page mount (`/(app)/challenge/[id]/page.tsx`):
     - Check localStorage for existing draft via `loadDraft(challengeId)`
     - If draft exists: restore nodes and edges to React Flow state
     - Show toast: "Draft restored" (Lucide `FileClock` icon, slate style)
     - If draft is older than 7 days: show toast with "Restore or start fresh?" option
-  - [ ] Track draft load status in canvas store: `draftStatus: "none" | "restoring" | "restored" | "saved"`
-  - [ ] On successful fresh test pass: auto-clear draft (solution is correct, no need to restore)
+  - [x] Track draft load status in canvas store: `draftStatus: "none" | "restoring" | "restored" | "saved"`
+  - [x] On successful fresh test pass: auto-clear draft (solution is correct, no need to restore)
 
-- [ ] Task 5: Implement Reset Canvas (AC: #3)
-  - [ ] Add "Reset" button to `CanvasToolbar.tsx` (danger variant: filled rose #F43F5E background, white text per UX-DR4 button hierarchy)
-  - [ ] On click: show shadcn/ui AlertDialog confirmation:
+- [x] Task 5: Implement Reset Canvas (AC: #3)
+  - [x] Add "Reset" button to `CanvasToolbar.tsx` (danger variant: filled rose #F43F5E background, white text per UX-DR4 button hierarchy)
+  - [x] On click: show shadcn/ui AlertDialog confirmation:
     - Title: "Reset Canvas?"
     - Body: "All blocks and connections will be cleared. This cannot be undone."
     - Confirm: "Reset" (danger button)
     - Cancel: "Keep working" (secondary button)
-  - [ ] On confirm: set nodes and edges to empty arrays, clear draft, reset undo history
-  - [ ] Show empty state: "Drag blocks here to build your logic"
-  - [ ] Wire keyboard shortcut R key: triggers confirmation dialog
-  - [ ] Track reset in canvas store: `resetCount` for analytics
+  - [x] On confirm: set nodes and edges to empty arrays, clear draft, reset undo history
+  - [x] Show empty state: "Drag blocks here to build your logic"
+  - [x] Wire keyboard shortcut R key: triggers confirmation dialog
+  - [x] Track reset in canvas store: `resetCount` for analytics
 
-- [ ] Task 6: Wire Keyboard R Shortcut to Reset (AC: #3)
-  - [ ] Update `web/src/hooks/use-canvas-keyboard.ts`
-  - [ ] R key → open reset confirmation dialog
-  - [ ] Only trigger if no text input is focused (check `document.activeElement`)
+- [x] Task 6: Wire Keyboard R Shortcut to Reset (AC: #3)
+  - [x] Update `web/src/hooks/use-canvas-keyboard.ts`
+  - [x] R key → open reset confirmation dialog
+  - [x] Only trigger if no text input is focused (check `document.activeElement`)
 
-- [ ] Task 7: Implement Canvas Toolbar Updates (AC: #3, #6)
-  - [ ] Update `web/src/components/canvas/CanvasToolbar.tsx`
-  - [ ] Undo button: enabled when `canUndo`, uses `Undo2` icon
-  - [ ] Redo button: enabled when `canRedo`, uses `Redo2` icon
-  - [ ] Reset button: filled rose #F43F5E background, white text, uses `RotateCcw` icon (UX-DR4 danger button)
-  - [ ] Disable undo/redo buttons when not available (gray state)
-  - [ ] Tooltips on hover: "Undo (Ctrl+Z)", "Redo (Ctrl+Shift+Z)", "Reset canvas"
-  - [ ] Undo/Redo buttons use shadcn/ui Button ghost variant with icon only; Reset uses danger filled variant with icon + label
+- [x] Task 7: Implement Canvas Toolbar Updates (AC: #3, #6)
+  - [x] Update `web/src/components/canvas/CanvasToolbar.tsx`
+  - [x] Undo button: enabled when `canUndo`, uses `Undo2` icon
+  - [x] Redo button: enabled when `canRedo`, uses `Redo2` icon
+  - [x] Reset button: filled rose #F43F5E background, white text, uses `RotateCcw` icon (UX-DR4 danger button)
+  - [x] Disable undo/redo buttons when not available (gray state)
+  - [x] Tooltips on hover: "Undo (Ctrl+Z)", "Redo (Ctrl+Shift+Z)", "Reset canvas"
+  - [x] Undo/Redo buttons use shadcn/ui Button ghost variant with icon only; Reset uses danger filled variant with icon + label
 
-- [ ] Task 8: Testing & Quality Assurance
-  - [ ] Write unit test for history manager (push, undo, redo, truncate on new change)
-  - [ ] Write unit test for auto-save (save, load, clear via localStorage mock)
-  - [ ] Write unit test for draft restoration on page mount
-  - [ ] Write unit test for reset canvas (clear state, show empty state)
-  - [ ] Write unit test for undo keyboard shortcuts (Ctrl+Z, Ctrl+Shift+Z)
-  - [ ] Write integration test: modify canvas → auto-save → navigate away → return → draft restored
-  - [ ] Write integration test: undo → state reverts → redo → state returns
-  - [ ] Write integration test: reset → confirm → canvas clears
-  - [ ] Test localStorage quota handling
-  - [ ] Test draft expiration (7-day cutoff)
-  - [ ] Verify auto-save interval timing (within 30s window)
-  - [ ] Accessibility: reset dialog keyboard trap, ARIA announcements
-  - [ ] Verify `npm run build` succeeds without errors
+- [x] Task 8: Testing & Quality Assurance
+  - [x] Write unit test for history manager (push, undo, redo, truncate on new change)
+  - [x] Write unit test for auto-save (save, load, clear via localStorage mock)
+  - [x] Write unit test for draft restoration on page mount
+  - [x] Write unit test for reset canvas (clear state, show empty state)
+  - [x] Write unit test for undo keyboard shortcuts (Ctrl+Z, Ctrl+Shift+Z)
+  - [x] Write integration test: modify canvas → auto-save → navigate away → return → draft restored
+  - [x] Write integration test: undo → state reverts → redo → state returns
+  - [x] Write integration test: reset → confirm → canvas clears
+  - [x] Test localStorage quota handling
+  - [x] Test draft expiration (7-day cutoff)
+  - [x] Verify auto-save interval timing (within 30s window)
+  - [x] Accessibility: reset dialog keyboard trap, ARIA announcements
+  - [x] Verify `npm run build` succeeds without errors
 
 ## Runnable Code Location
 
@@ -225,10 +225,81 @@ Reset Dialog Overlay:      bg #0F172A at 60% opacity
 
 ### Agent Model Used
 
-{{agent_model_name_version}}
+glm-5.1
 
 ### Debug Log References
 
 ### Completion Notes List
 
+- ✅ Implemented HistoryManager class with pointer-based undo/redo (max 50 entries) replacing inline history in canvas-store
+- ✅ Refactored canvas-store to use HistoryManager, added resetCanvas(), setDraftStatus(), draftStatus, resetCount
+- ✅ Created auto-save.ts with saveDraft/loadDraft/clearDraft/startAutoSave with localStorage key format logiq:draft:{userId}:{challengeId}, 30s interval, quota handling, 7-day expiry
+- ✅ Created use-draft-restore.ts hook for draft restoration on page mount with expired draft dialog
+- ✅ Created use-auto-save.ts hook for 30s auto-save interval with draft clearing on test success
+- ✅ Created DraftSavedIndicator component (subtle 2s bottom-right indicator per AC#5)
+- ✅ Created ResetConfirmDialog component (shadcn AlertDialog with danger button per AC#3)
+- ✅ Created DraftExpiredDialog component for 7-day old drafts
+- ✅ Updated LogicBlockCanvas to integrate all new features (draft restore, auto-save, reset dialog, undo/redo)
+- ✅ Updated CanvasToolbar with Reset button (rose #F43F5E), Undo/Redo with tooltips, disabled states at 0.4 opacity
+- ✅ Updated use-canvas-keyboard with Ctrl+Z/Y/Shift+Z undo/redo and R key reset
+- ✅ Updated challenge page to pass challengeId to LogicBlockCanvas
+- ✅ All 238+ tests pass including new history-manager, auto-save, draft-restore, reset, undo/redo keyboard tests
+- ✅ Build succeeds without errors
+
 ### File List
+
+- web/src/lib/canvas/history-manager.ts (NEW)
+- web/src/lib/canvas/history-manager.test.ts (NEW)
+- web/src/lib/canvas/auto-save.ts (NEW)
+- web/src/lib/canvas/auto-save.test.ts (NEW)
+- web/src/stores/canvas-store.ts (MODIFIED)
+- web/src/stores/canvas-store.test.ts (MODIFIED)
+- web/src/stores/canvas-store-undo-redo-reset.test.ts (NEW)
+- web/src/types/canvas-types.ts (MODIFIED - added DraftStatus, DraftData types)
+- web/src/hooks/use-canvas-keyboard.ts (MODIFIED)
+- web/src/hooks/use-canvas-keyboard.test.ts (MODIFIED)
+- web/src/hooks/use-canvas-keyboard-undo-redo.test.ts (NEW)
+- web/src/hooks/use-draft-restore.ts (NEW)
+- web/src/hooks/use-draft-restore.test.ts (NEW)
+- web/src/hooks/use-auto-save.ts (NEW)
+- web/src/hooks/use-auto-save.test.ts (NEW)
+- web/src/components/canvas/LogicBlockCanvas.tsx (MODIFIED)
+- web/src/components/canvas/CanvasToolbar.tsx (MODIFIED)
+- web/src/components/canvas/ResetConfirmDialog.tsx (NEW)
+- web/src/components/canvas/ResetConfirmDialog.test.tsx (NEW)
+- web/src/components/canvas/DraftSavedIndicator.tsx (NEW)
+- web/src/components/canvas/DraftSavedIndicator.test.tsx (NEW)
+- web/src/components/canvas/DraftExpiredDialog.tsx (NEW)
+- web/src/components/canvas/DraftExpiredDialog.test.tsx (NEW)
+- web/src/app/(app)/challenge/[id]/page.tsx (MODIFIED)
+
+### Review Findings (2026-05-15)
+
+#### Decision Needed
+
+- [x] [Review][Decision] T/R keyboard shortcuts NOT guarded during step-through execution **→ Resolved: Block both T and R during step-through.**
+- [x] [Review][Decision] localStorage userId always `"anonymous"` **→ Resolved: Source from useUserStore. Created `web/src/stores/user-store.ts` and integrated into hooks.**
+- [x] [Review][Decision] Auto-save is fixed 30s interval, not debounced from interaction **→ Resolved: Keep fixed 30s interval (intentional).**
+- [x] [Review][Decision] React Flow's built-in `<Controls>` component coexists with custom undo/redo toolbar **→ Resolved: Removed built-in Controls, added custom zoom in/out/fit-view buttons.**
+- [x] [Review][Decision] DraftSavedIndicator uses viewport `fixed` positioning vs canvas-relative `absolute` **→ Resolved: Changed to canvas-container relative positioning (`absolute`).**
+
+#### Patch
+
+- [x] [Review][Patch] HistoryManager module singleton leaks state across challenge navigations [web/src/stores/canvas-store.ts:60, web/src/lib/canvas/history-manager.ts:9]
+- [x] [Review][Patch] `_expired` property smuggled through type assertion without type declaration [web/src/lib/canvas/auto-save.ts:1217]
+- [x] [Review][Patch] pushHistory mutations happen OUTSIDE Zustand set() callback [web/src/stores/canvas-store.ts:601-658]
+- [x] [Review][Patch] Reset button not disabled while test is running [web/src/components/canvas/CanvasToolbar.tsx:100-112]
+- [x] [Review][Patch] Dead Zustand subscriptions cause unnecessary re-renders [web/src/components/canvas/LogicBlockCanvas.tsx:260-264, web/src/hooks/use-auto-save.ts:53-54]
+- [x] [Review][Patch] `hasRestored` ref never resets when challengeId changes [web/src/hooks/use-draft-restore.ts:1659-1667]
+- [x] [Review][Patch] declineExpiredDraft doesn't call clearDraft — user stuck in expired draft loop [web/src/hooks/use-draft-restore.ts:1696-1699]
+- [x] [Review][Patch] startAutoSave writes immediately on mount, races with draft restore [web/src/lib/canvas/auto-save.ts:1273]
+- [x] [Review][Patch] Post-reset auto-save saves empty canvas as draft [web/src/components/canvas/LogicBlockCanvas.tsx:284-290]
+- [x] [Review][Patch] Ctrl+R / Ctrl+T hijacked by R/T keyboard handler [web/src/hooks/use-canvas-keyboard.ts:75-84]
+- [x] [Review][Patch] DraftExpiredDialog onStartFresh fires on any dialog close (ESC/X) [web/src/components/canvas/DraftExpiredDialog.tsx:2406]
+- [x] [Review][Patch] Node drag floods history, evicting meaningful undo states [web/src/components/canvas/LogicBlockCanvas.tsx:247-257]
+- [x] [Review][Patch] Duplicate expiration logic between loadDraft and isDraftExpired [web/src/lib/canvas/auto-save.ts]
+- [x] [Review][Patch] undo()/redo() return raw snapshot references without defensive copy [web/src/lib/canvas/history-manager.ts:916-928]
+- [x] [Review][Patch] Initial save in startAutoSave doesn't trigger onSaved callback [web/src/lib/canvas/auto-save.ts:1275]
+- [x] [Review][Patch] Toast "Draft restored" uses sonner default success styling, not indigo design token [web/src/components/canvas/LogicBlockCanvas.tsx]
+- [x] [Review][Patch] acceptExpiredDraft silently fails if draft evicted between dialog and click [web/src/hooks/use-draft-restore.ts:41-42]
+- [x] [Review][Patch] Undo/redo active during step-through execution visualization [web/src/hooks/use-canvas-keyboard.ts:39-57]

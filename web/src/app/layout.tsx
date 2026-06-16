@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from 'next'
 import { Inter, JetBrains_Mono } from 'next/font/google'
 import { ThemeProvider } from '@/components/theme-provider'
 import { Toaster } from '@/components/ui/sonner'
+import '@xyflow/react/dist/style.css'
 import './globals.css'
 
 const inter = Inter({
@@ -17,7 +18,7 @@ const jetbrainsMono = JetBrains_Mono({
 })
 
 export const metadata: Metadata = {
-  title: 'LOGIQ',
+  title: 'Logiq',
   description: 'Interactive, visual, gamified learning platform for logical reasoning and DSA problem-solving',
 }
 

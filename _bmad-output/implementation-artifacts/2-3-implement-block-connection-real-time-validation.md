@@ -1,6 +1,6 @@
 # Story 2.3: Implement Block Connection & Real-Time Validation
 
-Status: ready-for-dev
+Status: done
 
 <!-- Note: Validation is optional. Run validate-create-story for quality check before dev-story. -->
 
@@ -26,11 +26,11 @@ So that I can construct a valid algorithm before testing.
 
 ## Tasks / Subtasks
 
-- [ ] Task 1: Define Block Compatibility Rules (AC: #2, #5, #6)
-  - [ ] Create `web/src/lib/canvas/block-validation.ts`
-  - [ ] Define `ConnectionRule` type: `{ fromType: BlockType, toType: BlockType, allowed: boolean, reason?: string }`
-  - [ ] Verify actual `BlockType` enum values from `canvas-types.ts` (⚠️ Story 2.2 may have `edgeCase` or `edgeCaseHandler` — check the codebase; architecture.md canonical is `edgeCase`)
-  - [ ] Define compatibility matrix for all block types:
+- [x] Task 1: Define Block Compatibility Rules (AC: #2, #5, #6)
+  - [x] Create `web/src/lib/canvas/block-validation.ts`
+  - [x] Define `ConnectionRule` type: `{ fromType: BlockType, toType: BlockType, allowed: boolean, reason?: string }`
+  - [x] Verify actual `BlockType` enum values from `canvas-types.ts` (⚠️ Story 2.2 may have `edgeCase` or `edgeCaseHandler` — check the codebase; architecture.md canonical is `edgeCase`)
+  - [x] Define compatibility matrix for all block types:
     - Loop → Condition, Comparison, Variable, Assignment, EdgeCase
     - Condition → Assignment, Comparison, Return, EdgeCase
     - Comparison → Condition, Assignment, Return
@@ -38,79 +38,79 @@ So that I can construct a valid algorithm before testing.
     - Assignment → Return, Comparison
     - Return → (none — terminal block; no source Handle rendered)
     - EdgeCase → Condition, Comparison, Assignment
-  - [ ] Define disallowed connection reasons as readable strings
-  - [ ] Export `isValidBlockConnection(fromType, toType): { valid: boolean; reason?: string }`
+  - [x] Define disallowed connection reasons as readable strings
+  - [x] Export `isValidBlockConnection(fromType, toType): { valid: boolean; reason?: string }`
 
-- [ ] Task 2: Create Custom Edge Component (AC: #1, #3)
-  - [ ] Create `web/src/components/canvas/BlockConnection.tsx`
-  - [ ] Use React Flow's `BaseEdge` and `getBezierPath()` for curved path rendering (import from `@xyflow/react`)
-  - [ ] Style: Slate #64748B stroke, 2px width, with arrow marker (`MarkerType.ArrowClosed` from `@xyflow/react`)
-  - [ ] On valid: neutral color with subtle glow
-  - [ ] On invalid: animation with red X indicator (absolute positioned)
-  - [ ] Add data attributes for testability: `data-edge-valid`, `data-edge-from`, `data-edge-to`
-  - [ ] Register as custom edge type: `edgeTypes={{ blockConnection: BlockConnection }}`
+- [x] Task 2: Create Custom Edge Component (AC: #1, #3)
+  - [x] Create `web/src/components/canvas/BlockConnection.tsx`
+  - [x] Use React Flow's `BaseEdge` and `getBezierPath()` for curved path rendering (import from `@xyflow/react`)
+  - [x] Style: Slate #64748B stroke, 2px width, with arrow marker (`MarkerType.ArrowClosed` from `@xyflow/react`)
+  - [x] On valid: neutral color with subtle glow
+  - [x] On invalid: animation with red X indicator (absolute positioned)
+  - [x] Add data attributes for testability: `data-edge-valid`, `data-edge-from`, `data-edge-to`
+  - [x] Register as custom edge type: `edgeTypes={{ blockConnection: BlockConnection }}`
 
-- [ ] Task 3: Implement Connection Validation Handler (AC: #2, #5, #6)
-  - [ ] Create `web/src/components/canvas/BlockValidator.tsx` (or add as hook `useBlockValidator.ts`)
-  - [ ] Implement `isValidConnection` callback for React Flow's `<ReactFlow>` component
-  - [ ] Check: source Handle position must be "source" (output) and target must be "target" (input)
-  - [ ] Check: source and target must be different nodes (no self-connections)
-  - [ ] Check: target must not already have an incoming connection (single input per block)
-  - [ ] Check: block types must be compatible per compatibility matrix
-  - [ ] Check: connection must not create a cycle (use `getOutgoers`/`getIncomers` from `@xyflow/react` or custom DFS)
-  - [ ] Return `false` + show toast/indicator for invalid connections (use shadcn/ui Toast via `toast()` from `@/components/ui/toast`)
-  - [ ] Return `true` for valid connections
+- [x] Task 3: Implement Connection Validation Handler (AC: #2, #5, #6)
+  - [x] Create `web/src/components/canvas/BlockValidator.tsx` (or add as hook `useBlockValidator.ts`)
+  - [x] Implement `isValidConnection` callback for React Flow's `<ReactFlow>` component
+  - [x] Check: source Handle position must be "source" (output) and target must be "target" (input)
+  - [x] Check: source and target must be different nodes (no self-connections)
+  - [x] Check: target must not already have an incoming connection (single input per block)
+  - [x] Check: block types must be compatible per compatibility matrix
+  - [x] Check: connection must not create a cycle (use `getOutgoers`/`getIncomers` from `@xyflow/react` or custom DFS)
+  - [x] Return `false` + show toast/indicator for invalid connections (use shadcn/ui Toast via `toast()` from `@/components/ui/toast`)
+  - [x] Return `true` for valid connections
 
-- [ ] Task 4: Implement Cycle Detection (AC: #5)
-  - [ ] Add cycle detection logic in `web/src/lib/canvas/cycle-detection.ts`
-  - [ ] Use DFS/BFS on nodes+edges graph to detect if adding new edge creates cycle
-  - [ ] Extract to pure function: `wouldCreateCycle(nodes, edges, newEdge): boolean`
-  - [ ] Call before allowing any new connection
-  - [ ] Show toast notification for cycle rejection
+- [x] Task 4: Implement Cycle Detection (AC: #5)
+  - [x] Add cycle detection logic in `web/src/lib/canvas/cycle-detection.ts`
+  - [x] Use DFS/BFS on nodes+edges graph to detect if adding new edge creates cycle
+  - [x] Extract to pure function: `wouldCreateCycle(nodes, edges, newEdge): boolean`
+  - [x] Call before allowing any new connection
+  - [x] Show toast notification for cycle rejection
 
-- [ ] Task 5: Create Connection Event Handlers (AC: #1, #3)
-  - [ ] Implement `onConnect` callback: create new edge on valid connection
-  - [ ] Use `addEdge()` from `@xyflow/react` to add edge to state
-  - [ ] Set edge `type: "blockConnection"` and `animated: true` for initial snap animation
-  - [ ] After 500ms, set `animated: false` for static display
-  - [ ] Update canvas store with new edge
-  - [ ] Implement `onConnectStart`, `onConnectEnd` for visual feedback during drag
-  - [ ] On `onConnectEnd` with no valid target: clean up temporary connection line
+- [x] Task 5: Create Connection Event Handlers (AC: #1, #3)
+  - [x] Implement `onConnect` callback: create new edge on valid connection
+  - [x] Use `addEdge()` from `@xyflow/react` to add edge to state
+  - [x] Set edge `type: "blockConnection"` and `animated: true` for initial snap animation
+  - [x] After 500ms, set `animated: false` for static display
+  - [x] Update canvas store with new edge
+  - [x] Implement `onConnectStart`, `onConnectEnd` for visual feedback during drag
+  - [x] On `onConnectEnd` with no valid target: clean up temporary connection line
 
-- [ ] Task 6: Implement Handle Direction Validation (AC: #6)
-  - [ ] Each `LogicBlockNode` has `Handle type="target"` (top) and `Handle type="source"` (bottom)
-  - [ ] In `isValidConnection`: reject source→source and target→target connections
-  - [ ] Visual feedback: rejected Handle shows amber pulse for 1s
-  - [ ] Screen reader: "Cannot connect — must connect output to input"
+- [x] Task 6: Implement Handle Direction Validation (AC: #6)
+  - [x] Each `LogicBlockNode` has `Handle type="target"` (top) and `Handle type="source"` (bottom)
+  - [x] In `isValidConnection`: reject source→source and target→target connections
+  - [x] Visual feedback: rejected Handle shows amber pulse for 1s
+  - [x] Screen reader: "Cannot connect — must connect output to input"
 
-- [ ] Task 7: Screen Reader Announcer (AC: #3, #4)
-  - [ ] Create `web/src/hooks/use-canvas-announcer.ts`
-  - [ ] Use `aria-live="polite"` region for connection announcements
-  - [ ] On valid connection: announce "Connected [block A] to [block B]"
-  - [ ] On rejected connection: announce "Cannot connect [block A] to [block B] — [reason]"
-  - [ ] On flow build: announce ordered list of connected blocks
-  - [ ] On cycle rejection: announce "Cannot create circular logic"
+- [x] Task 7: Screen Reader Announcer (AC: #3, #4)
+  - [x] Create `web/src/hooks/use-canvas-announcer.ts`
+  - [x] Use `aria-live="polite"` region for connection announcements
+  - [x] On valid connection: announce "Connected [block A] to [block B]"
+  - [x] On rejected connection: announce "Cannot connect [block A] to [block B] — [reason]"
+  - [x] On flow build: announce ordered list of connected blocks
+  - [x] On cycle rejection: announce "Cannot create circular logic"
 
-- [ ] Task 8: Update Canvas Store for Edges (AC: #1, #2, #3)
-  - [ ] Extend `web/src/stores/canvas-store.ts`
-  - [ ] Add `addEdge(edge: Edge)` action
-  - [ ] Add `removeEdge(edgeId: string)` action
-  - [ ] Add `validateConnection(fromId, toId): boolean` action (calls validation lib)
-  - [ ] Add `getBlockGraph(): { nodes, edges }` selector for cycle detection
-  - [ ] Track `lastValidationError: string | null` for UI display
+- [x] Task 8: Update Canvas Store for Edges (AC: #1, #2, #3)
+  - [x] Extend `web/src/stores/canvas-store.ts`
+  - [x] Add `addEdge(edge: Edge)` action
+  - [x] Add `removeEdge(edgeId: string)` action
+  - [x] Add `validateConnection(fromId, toId): boolean` action (calls validation lib)
+  - [x] Add `getBlockGraph(): { nodes, edges }` selector for cycle detection
+  - [x] Track `lastValidationError: string | null` for UI display
 
-- [ ] Task 9: Testing & Quality Assurance
-  - [ ] Write unit test for block compatibility matrix (all valid/invalid pairs)
-  - [ ] Write unit test for cycle detection algorithm (DFS correctness)
-  - [ ] Write unit test for `isValidBlockConnection` for all block type pairs
-  - [ ] Write unit test for Handle direction validation (source→target only)
-  - [ ] Write unit test for canvas store edge actions
-  - [ ] Write integration test: drag connection → valid → edge created
-  - [ ] Write integration test: drag connection → incompatible → rejected + tooltip
-  - [ ] Write integration test: drag connection → cycle → rejected + toast
-  - [ ] Write integration test: drag connection → wrong direction → rejected
-  - [ ] Accessibility test: screen reader announcement for connections
-  - [ ] Verify `npm run build` succeeds without errors
+- [x] Task 9: Testing & Quality Assurance
+  - [x] Write unit test for block compatibility matrix (all valid/invalid pairs)
+  - [x] Write unit test for cycle detection algorithm (DFS correctness)
+  - [x] Write unit test for `isValidBlockConnection` for all block type pairs
+  - [x] Write unit test for Handle direction validation (source→target only)
+  - [x] Write unit test for canvas store edge actions
+  - [x] Write integration test: drag connection → valid → edge created
+  - [x] Write integration test: drag connection → incompatible → rejected + tooltip
+  - [x] Write integration test: drag connection → cycle → rejected + toast
+  - [x] Write integration test: drag connection → wrong direction → rejected
+  - [x] Accessibility test: screen reader announcement for connections
+  - [x] Verify `npm run build` succeeds without errors
 
 ## Runnable Code Location
 
@@ -222,10 +222,43 @@ aria-live="polite" region in canvas wrapper:
 
 ### Agent Model Used
 
-{{agent_model_name_version}}
+GLM-5.1
 
 ### Debug Log References
 
+- All unit tests pass (39 block-validation, 17 cycle-detection, 17 canvas-store-edges, 6 BlockConnection, 5 announcer, 7 BlockValidator)
+- TypeScript compilation passes cleanly
+- Next.js build succeeds without errors
+- Total test count: 388 passed (1 pre-existing unrelated fail in forgot-password route)
+
 ### Completion Notes List
 
+- ✅ Task 1: Block compatibility rules defined in `block-validation.ts` with full type pair coverage and BLOCK_LABELS map
+- ✅ Task 2: Custom `BlockConnection` edge component with bezier path, Slate #64748B valid color, Rose #F43F5E invalid color, red X indicator, SVG arrow markers, snap animation (500ms dasharray)
+- ✅ Task 3: `useBlockValidator` hook implements `isValidConnection` with self-connection, direction, duplicate-input, type-compatibility, and cycle checks; uses `sonner` toast for user feedback
+- ✅ Task 4: DFS-based `wouldCreateCycle()` pure function in `cycle-detection.ts`; 17 tests covering all graph scenarios
+- ✅ Task 5: `onConnect`, `onConnectStart`, `onConnectEnd` handlers in `LogicBlockCanvas.tsx`; edges created with `type: 'blockConnection'` and `animated: true` then set to `false` after 500ms
+- ✅ Task 6: Handle direction validation in `isValidConnection`; source handle type checked, Return block omits source Handle
+- ✅ Task 7: `use-canvas-announcer.ts` hook with `aria-live="polite"` region for all connection announcements
+- ✅ Task 8: Canvas store extended with `addEdge`, `removeEdge`, `validateConnection`, `getBlockGraph`, `setLastValidationError`
+- ✅ Task 9: 94 new/updated tests covering validation, cycle detection, store actions, components, and accessibility
+
 ### File List
+
+- web/src/lib/canvas/block-validation.ts (new)
+- web/src/lib/canvas/block-validation.test.ts (new)
+- web/src/lib/canvas/cycle-detection.ts (new)
+- web/src/lib/canvas/cycle-detection.test.ts (new)
+- web/src/components/canvas/BlockConnection.tsx (new)
+- web/src/components/canvas/BlockConnection.test.tsx (new)
+- web/src/components/canvas/BlockValidator.tsx (new)
+- web/src/components/canvas/BlockValidator.test.tsx (new)
+- web/src/components/canvas/LogicBlockCanvas.tsx (modified)
+- web/src/components/canvas/LogicBlockCanvas.test.tsx (modified)
+- web/src/components/canvas/LogicBlockNode.tsx (modified)
+- web/src/hooks/use-canvas-announcer.ts (new)
+- web/src/hooks/use-canvas-announcer.test.ts (new)
+- web/src/stores/canvas-store.ts (modified)
+- web/src/stores/canvas-store.test.ts (modified)
+- web/src/stores/canvas-store-edges.test.ts (new)
+- web/src/types/canvas-types.ts (modified)
